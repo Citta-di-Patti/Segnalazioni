@@ -48,6 +48,7 @@ const COLUMNS = [
   'Operatore',
   'Data_Presa_Carico',
   'Data_Risoluzione',
+  'Token_Risoluzione',   // UUID segreto — NON pubblicare questa colonna nel CSV pubblico
 ];
 
 // ───────────────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ function doPost(e) {
 
     // Azione "risolvi": aggiorna Stato e Data_Risoluzione di una riga esistente
     if (data.action === 'risolvi') {
-      return risolviSegnalazione(sheet, data.ID_Segnalazione);
+      return risolviSegnalazione(sheet, data);
     }
 
     // Azione default: inserisci nuova segnalazione
@@ -94,12 +95,16 @@ function doPost(e) {
 }
 
 // ───────────────────────────────────────────────────────────────
-//  risolviSegnalazione — trova la riga per ID e aggiorna Stato
+//  risolviSegnalazione — trova la riga per token (sicuro) o per ID
+//  (fallback per vecchie email pre-token)
 // ───────────────────────────────────────────────────────────────
-function risolviSegnalazione(sheet, id) {
-  if (!id) {
+function risolviSegnalazione(sheet, data) {
+  const token = (data.token || '').trim();
+  const id    = (data.ID_Segnalazione || '').trim();
+
+  if (!token && !id) {
     return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, error: 'ID_Segnalazione mancante' }))
+      .createTextOutput(JSON.stringify({ ok: false, error: 'Token o ID_Segnalazione mancante' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -110,23 +115,31 @@ function risolviSegnalazione(sheet, id) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  const idColIdx      = COLUMNS.indexOf('ID_Segnalazione') + 1;   // colonna 1
-  const statoColIdx   = COLUMNS.indexOf('Stato') + 1;             // colonna 31
-  const dataRisColIdx = COLUMNS.indexOf('Data_Risoluzione') + 1;  // colonna 35
+  const tokenColIdx   = COLUMNS.indexOf('Token_Risoluzione') + 1;
+  const idColIdx      = COLUMNS.indexOf('ID_Segnalazione') + 1;
+  const statoColIdx   = COLUMNS.indexOf('Stato') + 1;
+  const dataRisColIdx = COLUMNS.indexOf('Data_Risoluzione') + 1;
 
-  // Leggi tutti gli ID dalla riga 2 in poi
-  const ids = sheet.getRange(2, idColIdx, lastRow - 1, 1).getValues();
+  // 1° tentativo: ricerca per Token_Risoluzione (più sicura)
   let foundRow = -1;
-  for (let i = 0; i < ids.length; i++) {
-    if (ids[i][0] === id) {
-      foundRow = i + 2; // +2: header (riga 1) + indice 0-based
-      break;
+  if (token && tokenColIdx > 0) {
+    const tokens = sheet.getRange(2, tokenColIdx, lastRow - 1, 1).getValues();
+    for (let i = 0; i < tokens.length; i++) {
+      if (tokens[i][0] === token) { foundRow = i + 2; break; }
+    }
+  }
+
+  // 2° tentativo: fallback per ID (vecchie segnalazioni senza token)
+  if (foundRow === -1 && id) {
+    const ids = sheet.getRange(2, idColIdx, lastRow - 1, 1).getValues();
+    for (let i = 0; i < ids.length; i++) {
+      if (ids[i][0] === id) { foundRow = i + 2; break; }
     }
   }
 
   if (foundRow === -1) {
     return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, error: 'ID non trovato: ' + id }))
+      .createTextOutput(JSON.stringify({ ok: false, error: 'Segnalazione non trovata' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -140,7 +153,7 @@ function risolviSegnalazione(sheet, id) {
   sheet.getRange(foundRow, dataRisColIdx).setValue(oggi);
 
   return ContentService
-    .createTextOutput(JSON.stringify({ ok: true, id: id, data: oggi }))
+    .createTextOutput(JSON.stringify({ ok: true, data: oggi }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 

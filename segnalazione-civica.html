@@ -1168,6 +1168,12 @@ async function sendReport() {
 
   const now = new Date();
   const ticketId = 'SGN-' + now.getTime();
+
+  // Token segreto monouso — non finisce mai nel CSV pubblico, solo nell'email alla PA
+  const token = (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : 'xxxx-xxxx-xxxx-xxxx'.replace(/x/g, () =>
+        (Math.random() * 16 | 0).toString(16));
   const nome = document.getElementById('nome').value || 'Cittadino anonimo';
   const emailSegnalante = document.getElementById('email').value || '';
   const descr = document.getElementById('descr').value;
@@ -1197,7 +1203,7 @@ async function sendReport() {
   const siteUrl = CONFIG.comune.siteUrl || window.location.href.split('?')[0];
 
   // URL che la PA può aprire per segnare la segnalazione come risolta
-  const resolveUrl = window.location.href.split('segnalazione-civica.html')[0] + 'index.html?risolvi=' + ticketId;
+  const resolveUrl = window.location.href.split('segnalazione-civica.html')[0] + 'index.html?risolvi=' + token;
 
   const testoMessaggio = [
     `📍 Segnalazione Civica — ${urgLabel}${cat}`,
@@ -1247,6 +1253,7 @@ async function sendReport() {
       Testo_Messaggio:   testoMessaggio,
       URL_Segnalazione:  siteUrl,
       Stato:             'Nuova',
+      Token_Risoluzione: token,
     };
 
     try {

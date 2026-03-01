@@ -602,9 +602,9 @@
       <i class="fa-solid fa-xmark"></i>
     </button>
     <h2 style="color:var(--sage)">✅ Segna come risolta</h2>
-    <p>Incolla o digita l'ID della segnalazione (ricevuto via email):</p>
+    <p>Incolla il codice di risoluzione ricevuto via email:</p>
     <input class="resolve-id-box" id="resolveIdDisplay" type="text"
-      placeholder="Es. SGN-20250301-A1B2C3D4"
+      placeholder="Es. 550e8400-e29b-41d4-a716-446655440000"
       autocomplete="off" spellcheck="false"
       onkeydown="if(event.key==='Enter')confirmResolve()">
     <p style="font-size:0.82rem;color:#777;margin-bottom:1rem">
@@ -941,7 +941,6 @@ function makePopupHTML(r) {
   if (r.Descrizione) {
     html += `<div class="popup-descr">${r.Descrizione.substring(0, 120)}${r.Descrizione.length > 120 ? '...' : ''}</div>`;
   }
-  html += `<div class="popup-id">${r.ID_Segnalazione}</div>`;
   return html;
 }
 
@@ -1050,7 +1049,7 @@ function confirmResolve() {
     method: 'POST',
     mode: 'no-cors',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'risolvi', ID_Segnalazione: id })
+    body: JSON.stringify({ action: 'risolvi', token: id, ID_Segnalazione: id })
   })
   .then(() => {
     res.className = 'resolve-result ok';
