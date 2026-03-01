@@ -25,6 +25,7 @@ let map;
 let activeFilters = { urgenza: 'all', stato: 'all' };
 let highlightedId = null;
 let viewMode      = 'aperte';   // 'aperte' | 'risolte'
+let _focusTimer   = null;       // timer per apertura popup da focusReport
 
 // ─────────────────────────────────────────────────────────
 //  MAPPA INIT
@@ -388,8 +389,12 @@ function focusReport(id) {
   if (isNaN(lat) || isNaN(lng)) return;
 
   const m = markerById[id];
-  if (m) map.once('moveend', () => m.openPopup());
   map.setView([lat, lng], 17, { animate: true });
+
+  if (m) {
+    clearTimeout(_focusTimer);
+    _focusTimer = setTimeout(() => m.openPopup(), 350);
+  }
 }
 
 function highlightListItem(id) {
