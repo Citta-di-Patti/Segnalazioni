@@ -52,6 +52,7 @@ const COLUMNS = [
 
 // ───────────────────────────────────────────────────────────────
 //  doPost — riceve i dati dall'app e li scrive nel foglio
+//           oppure aggiorna lo stato di una segnalazione esistente
 // ───────────────────────────────────────────────────────────────
 function doPost(e) {
   try {
@@ -61,6 +62,12 @@ function doPost(e) {
       .openById(SHEET_ID)
       .getSheetByName(SHEET_NAME);
 
+    // Azione "risolvi": aggiorna Stato e Data_Risoluzione di una riga esistente
+    if (data.action === 'risolvi') {
+      return risolviSegnalazione(sheet, data.ID_Segnalazione);
+    }
+
+    // Azione default: inserisci nuova segnalazione
     // Se il foglio è vuoto, scrivi l'intestazione
     if (sheet.getLastRow() === 0) {
       sheet.appendRow(COLUMNS);
@@ -84,6 +91,57 @@ function doPost(e) {
       .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// ───────────────────────────────────────────────────────────────
+//  risolviSegnalazione — trova la riga per ID e aggiorna Stato
+// ───────────────────────────────────────────────────────────────
+function risolviSegnalazione(sheet, id) {
+  if (!id) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: 'ID_Segnalazione mancante' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: 'Nessuna segnalazione nel foglio' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const idColIdx      = COLUMNS.indexOf('ID_Segnalazione') + 1;   // colonna 1
+  const statoColIdx   = COLUMNS.indexOf('Stato') + 1;             // colonna 31
+  const dataRisColIdx = COLUMNS.indexOf('Data_Risoluzione') + 1;  // colonna 35
+
+  // Leggi tutti gli ID dalla riga 2 in poi
+  const ids = sheet.getRange(2, idColIdx, lastRow - 1, 1).getValues();
+  let foundRow = -1;
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i][0] === id) {
+      foundRow = i + 2; // +2: header (riga 1) + indice 0-based
+      break;
+    }
+  }
+
+  if (foundRow === -1) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: 'ID non trovato: ' + id }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const oggi = Utilities.formatDate(
+    new Date(),
+    Session.getScriptTimeZone(),
+    'dd/MM/yyyy'
+  );
+
+  sheet.getRange(foundRow, statoColIdx).setValue('Risolta');
+  sheet.getRange(foundRow, dataRisColIdx).setValue(oggi);
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true, id: id, data: oggi }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ───────────────────────────────────────────────────────────────

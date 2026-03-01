@@ -1194,6 +1194,11 @@ async function sendReport() {
   const catEmoji = emojiMap[cat] || '📌';
   const urgLabel = urgenza === 'Alta' ? '🔴 URGENTE — ' : urgenza === 'Bassa' ? '🟢 ' : '🟡 ';
 
+  const siteUrl = CONFIG.comune.siteUrl || window.location.href.split('?')[0];
+
+  // URL che la PA può aprire per segnare la segnalazione come risolta
+  const resolveUrl = window.location.href.split('segnalazione-civica.html')[0] + 'index.html?risolvi=' + ticketId;
+
   const testoMessaggio = [
     `📍 Segnalazione Civica — ${urgLabel}${cat}`,
     `📌 Luogo: ${addr}`,
@@ -1201,10 +1206,12 @@ async function sendReport() {
     `👤 Segnalato da: ${nome}`,
     `🕐 ${now.toLocaleString('it-IT')}`,
     `#SegnalaOra #${cat.replace(/[^a-zA-Z]/g,'')}`,
-    ticketId
+    ticketId,
+    `\n──────────────────────────────────────`,
+    `Per segnare questa segnalazione come RISOLTA:`,
+    resolveUrl,
+    `──────────────────────────────────────`
   ].filter(Boolean).join('\n');
-
-  const siteUrl = CONFIG.comune.siteUrl || window.location.href.split('?')[0];
 
   // 1. POST JSON ad Apps Script (se configurato)
   if (CONFIG.appsScriptUrl) {

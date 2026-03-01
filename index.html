@@ -175,6 +175,67 @@
   .info-modal .credits a { color: var(--amber); text-decoration: none; }
   .info-modal .credits a:hover { text-decoration: underline; }
 
+  /* VIEW TABS (Aperte / Risolte) */
+  .view-tabs {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.8rem;
+  }
+  .view-tab {
+    flex: 1;
+    background: var(--mist);
+    border: 1px solid rgba(26,18,8,0.1);
+    border-radius: 8px;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s;
+  }
+  .view-tab:hover { border-color: var(--amber); color: var(--amber); }
+  .view-tab.active { background: var(--amber); border-color: var(--amber); color: white; }
+  .view-tab.active-resolved { background: var(--sage); border-color: var(--sage); color: white; }
+
+  /* MODAL RISOLUZIONE */
+  .resolve-id-box {
+    background: var(--mist);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    font-family: monospace;
+    font-size: 0.88rem;
+    letter-spacing: 0.03em;
+    color: var(--ink);
+    margin: 0.7rem 0 1rem;
+    word-break: break-all;
+  }
+  .resolve-confirm-btn {
+    width: 100%;
+    background: var(--sage);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.92rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .resolve-confirm-btn:hover:not(:disabled) { background: #2d4435; }
+  .resolve-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .resolve-result {
+    margin-top: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    display: none;
+  }
+  .resolve-result.ok  { background: #e8f5e9; color: #2e7d32; }
+  .resolve-result.err { background: #fdecea; color: #c62828; }
+
   /* LAYOUT */
   .app-body {
     flex: 1;
@@ -513,6 +574,25 @@
   </div>
 </div>
 
+<!-- MODAL RISOLUZIONE (aperto via ?risolvi=ID nell'URL) -->
+<div class="info-overlay" id="resolveOverlay" onclick="if(event.target===this)closeResolve()">
+  <div class="info-modal" style="max-width:420px">
+    <button class="info-modal-close" onclick="closeResolve()" title="Chiudi">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <h2 style="color:var(--sage)">✅ Segna come risolta</h2>
+    <p>Vuoi segnare come risolta la segnalazione:</p>
+    <div class="resolve-id-box" id="resolveIdDisplay">—</div>
+    <p style="font-size:0.82rem;color:#777;margin-bottom:1rem">
+      Questa azione aggiorna lo stato nel sistema. La segnalazione sarà visibile nella sezione <em>Risolte</em> entro 1–3 minuti.
+    </p>
+    <button class="resolve-confirm-btn" id="resolveConfirmBtn" onclick="confirmResolve()">
+      ✅ Conferma risoluzione
+    </button>
+    <div class="resolve-result" id="resolveResult"></div>
+  </div>
+</div>
+
 <div class="app-body">
 
   <!-- PANNELLO -->
@@ -533,7 +613,12 @@
         </div>
       </div>
 
-      <div class="filters">
+      <div class="view-tabs">
+        <button class="view-tab active" id="tabAperte" onclick="setViewMode('aperte')">📍 Aperte</button>
+        <button class="view-tab" id="tabRisolte" onclick="setViewMode('risolte')">✅ Risolte</button>
+      </div>
+
+      <div class="filters" id="filtersPanel">
         <span class="filter-label">Urgenza</span>
         <div class="filter-chips" id="urgFilter">
           <div class="chip active" data-val="all" onclick="setFilter('urgenza','all',this)">Tutte</div>
@@ -550,7 +635,7 @@
           <div class="chip" data-val="Risolta" onclick="setFilter('stato','Risolta',this)">Risolta</div>
         </div>
       </div>
-    </div>
+    </div><!-- /filters -->
 
     <div class="report-list" id="reportList">
       <div class="no-results">Caricamento segnalazioni...</div>
@@ -581,8 +666,8 @@
 //  CONFIGURAZIONE — stessa del file segnalazione-civica.html
 // ─────────────────────────────────────────────
 const SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsv5emsudeZOCiaREWWRFP14r5ZSmMW-WzwBTNv-aUitRaEb8mOy5dbm4KmBjpSwSSn2A-GAL7UGYz/pub?gid=0&single=true&output=csv';
-// Sostituisci con l'URL del tuo Google Sheet pubblicato come CSV
-// Es: 'https://docs.google.com/spreadsheets/d/ID/pub?gid=0&single=true&output=csv'
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwiLYj4k102Vamc5PuqYp6euSVnYJh61RtkgTGvXufbLV3R_r-j2MRCdlavPu2nCFvpmw/exec';
 
 // Posizione default della mappa (centro Italia)
 const MAP_DEFAULT = { lat: 41.9028, lng: 12.4964, zoom: 6 };
@@ -596,6 +681,8 @@ let markers = [];
 let map;
 let activeFilters = { urgenza: 'all', stato: 'all' };
 let highlightedId = null;
+let viewMode = 'aperte';   // 'aperte' | 'risolte'
+let resolveId = null;
 
 // ─────────────────────────────────────────────
 //  MAPPA INIT
@@ -719,10 +806,23 @@ function setFilter(type, val, el) {
   renderAll();
 }
 
+function setViewMode(mode) {
+  viewMode = mode;
+  document.getElementById('tabAperte').classList.toggle('active', mode === 'aperte');
+  document.getElementById('tabRisolte').classList.toggle('active', mode === 'risolte');
+  document.getElementById('tabRisolte').classList.toggle('active-resolved', mode === 'risolte');
+  document.getElementById('filtersPanel').style.display = mode === 'risolte' ? 'none' : '';
+  renderAll();
+}
+
 function applyFilters() {
   return allReports.filter(r => {
-    if (activeFilters.urgenza !== 'all' && r.Urgenza !== activeFilters.urgenza) return false;
-    if (activeFilters.stato !== 'all' && r.Stato !== activeFilters.stato) return false;
+    if (viewMode === 'aperte' && r.Stato === 'Risolta') return false;
+    if (viewMode === 'risolte' && r.Stato !== 'Risolta') return false;
+    if (viewMode === 'aperte') {
+      if (activeFilters.urgenza !== 'all' && r.Urgenza !== activeFilters.urgenza) return false;
+      if (activeFilters.stato !== 'all' && r.Stato !== activeFilters.stato) return false;
+    }
     return true;
   });
 }
@@ -748,7 +848,19 @@ function updateStats() {
 
 const URGENCY_COLORS = { 'Alta': '#c0392b', 'Normale': '#d4820a', 'Bassa': '#3d5a47' };
 
-function makeMarkerIcon(urgenza) {
+function makeMarkerIcon(urgenza, stato) {
+  if (stato === 'Risolta') {
+    return L.divIcon({
+      className: '',
+      html: `<svg width="28" height="36" viewBox="0 0 28 36" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 0C6.3 0 0 6.3 0 14c0 9.8 14 22 14 22S28 23.8 28 14C28 6.3 21.7 0 14 0z" fill="#3d5a47"/>
+        <path d="M8 14l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>`,
+      iconSize: [28, 36],
+      iconAnchor: [14, 36],
+      popupAnchor: [0, -36]
+    });
+  }
   const color = URGENCY_COLORS[urgenza] || '#d4820a';
   return L.divIcon({
     className: '',
@@ -766,14 +878,12 @@ function renderMarkers() {
   markers.forEach(m => map.removeLayer(m));
   markers = [];
 
-  const idSet = new Set(filteredReports.map(r => r.ID_Segnalazione));
-
   filteredReports.forEach(report => {
     const lat = parseFloat(report.Lat);
     const lng = parseFloat(report.Long);
     if (isNaN(lat) || isNaN(lng)) return;
 
-    const m = L.marker([lat, lng], { icon: makeMarkerIcon(report.Urgenza) });
+    const m = L.marker([lat, lng], { icon: makeMarkerIcon(report.Urgenza, report.Stato) });
     m.bindPopup(makePopupHTML(report), { maxWidth: 300 });
     m.on('click', () => highlightListItem(report.ID_Segnalazione));
     m.addTo(map);
@@ -875,7 +985,58 @@ loadData();
 
 function openInfo()  { document.getElementById('infoOverlay').classList.add('open'); }
 function closeInfo() { document.getElementById('infoOverlay').classList.remove('open'); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInfo(); });
+
+// ─── RISOLUZIONE SEGNALAZIONE ─────────────────
+function openResolve(id) {
+  resolveId = id;
+  document.getElementById('resolveIdDisplay').textContent = id;
+  const res = document.getElementById('resolveResult');
+  res.className = 'resolve-result';
+  res.textContent = '';
+  const btn = document.getElementById('resolveConfirmBtn');
+  btn.disabled = false;
+  btn.textContent = '✅ Conferma risoluzione';
+  document.getElementById('resolveOverlay').classList.add('open');
+}
+
+function closeResolve() {
+  document.getElementById('resolveOverlay').classList.remove('open');
+  history.replaceState({}, '', location.pathname);
+}
+
+function confirmResolve() {
+  const btn = document.getElementById('resolveConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = 'Invio in corso…';
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'risolvi', ID_Segnalazione: resolveId })
+  })
+  .then(() => {
+    const res = document.getElementById('resolveResult');
+    res.className = 'resolve-result ok';
+    res.textContent = '✅ Richiesta inviata. La segnalazione sarà visibile nella sezione Risolte entro 1–3 minuti.';
+    btn.textContent = 'Inviato ✓';
+  })
+  .catch(() => {
+    const res = document.getElementById('resolveResult');
+    res.className = 'resolve-result err';
+    res.textContent = '❌ Errore di rete. Riprova tra qualche istante.';
+    btn.disabled = false;
+    btn.textContent = '✅ Conferma risoluzione';
+  });
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeInfo(); closeResolve(); }
+});
+
+// Rileva ?risolvi=ID nell'URL e apre il modal automaticamente
+const _urlId = new URLSearchParams(location.search).get('risolvi');
+if (_urlId) openResolve(_urlId);
 </script>
 </body>
 </html>
