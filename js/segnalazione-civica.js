@@ -185,17 +185,37 @@ function getCCEmails() {
   return [...new Set([...fromAreas, ...fromField])];
 }
 
-function populateSocialDropdown() {
-  const sel = document.getElementById('socialSelect');
-  (_socialData.social || []).forEach(s => {
+function _addSocialOptions(grp, socials) {
+  socials.forEach(s => {
     const key = normalizePlatform(s.piattaforma);
     const opt = document.createElement('option');
-    opt.value              = key;
-    opt.dataset.url        = s.url    || '';
-    opt.dataset.handle     = s.handle || '';
+    opt.value               = key;
+    opt.dataset.url         = s.url    || '';
+    opt.dataset.handle      = s.handle || '';
     opt.dataset.piattaforma = s.piattaforma;
     opt.textContent = platformEmoji(key) + '  ' + s.piattaforma + (s.handle ? '  ·  @' + s.handle : '');
-    sel.appendChild(opt);
+    grp.appendChild(opt);
+  });
+}
+
+function populateSocialDropdown() {
+  const sel = document.getElementById('socialSelect');
+
+  // ── Comune / Ente principale ──────────────────────────
+  if ((_socialData.social || []).length) {
+    const grp = document.createElement('optgroup');
+    grp.label = _socialData.ente || 'Comune';
+    _addSocialOptions(grp, _socialData.social);
+    sel.appendChild(grp);
+  }
+
+  // ── Società Partecipate ──────────────────────────
+  _societaPartecipate.forEach(soc => {
+    if (!soc.social || !soc.social.length) return;
+    const grp = document.createElement('optgroup');
+    grp.label = soc.nome;
+    _addSocialOptions(grp, soc.social);
+    sel.appendChild(grp);
   });
 }
 
