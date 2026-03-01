@@ -636,6 +636,58 @@ footer a:hover { text-decoration: underline; }
 .footer-sep { opacity: 0.3; }
 .footer-right { margin-left: auto; }
 
+/* ── STATS OVERLAY (iframe modal) ───────────────────── */
+.stats-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,18,8,0.72);
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+.stats-overlay.open { display: flex; }
+
+.stats-iframe-wrap {
+  background: var(--paper);
+  border-radius: 14px;
+  width: min(960px, 96vw);
+  height: min(700px, 90vh);
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+
+.stats-iframe-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.stats-close-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+  background: rgba(26,18,8,0.55);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  opacity: 0.85;
+  transition: opacity 0.2s, background 0.2s;
+}
+.stats-close-btn:hover { opacity: 1; background: rgba(26,18,8,0.8); }
+
 /* ── TABLET (641–900px) ──────────────────────────────── */
 @media (min-width: 641px) and (max-width: 900px) {
   :root { --panel: 272px; }

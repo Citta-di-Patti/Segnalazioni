@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistiche — SegnalaOra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"/>
+<link rel="stylesheet" href="css/statistiche.css">
+</head>
+<body>
+
+<div class="stats-header">
+  <span class="sh-icon"><i class="fa-solid fa-chart-simple"></i></span>
+  <div>
+    <h1>Statistiche</h1>
+    <p>SegnalaOra · Segnalazioni civiche</p>
+  </div>
+  <a href="index.html" class="sh-back">← Mappa</a>
+</div>
+
+<div id="loadingWrap" class="loading-wrap">
+  <div class="spinner"></div>
+  <p>Caricamento dati...</p>
+</div>
+
+<div id="statsContent" class="stats-content" style="display:none">
+
+  <!-- STAT CARDS -->
+  <div class="stat-cards">
+    <div class="stat-card">
+      <div class="sc-num" id="scTotale">—</div>
+      <div class="sc-lbl">Totali</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="sc-num" id="scAperte">—</div>
+      <div class="sc-lbl">Aperte</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="sc-num" id="scAlta">—</div>
+      <div class="sc-lbl">Alta urgenza</div>
+    </div>
+    <div class="stat-card ok">
+      <div class="sc-num" id="scRisolte">—</div>
+      <div class="sc-lbl">Risolte</div>
+    </div>
+  </div>
+
+  <!-- FILTRO CATEGORIA -->
+  <div class="filter-bar" id="filterBar">
+    <span class="filter-bar-label"><i class="fa-solid fa-filter"></i> Filtra per categoria:</span>
+    <div class="select-wrap-stats">
+      <select id="catFilter" onchange="filterByCategory(this.value)">
+        <option value="">— Tutte le categorie —</option>
+      </select>
+    </div>
+    <button class="filter-reset" id="filterReset" onclick="filterByCategory('')" title="Rimuovi filtro">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <!-- CHARTS GRID -->
+  <div class="charts-grid">
+
+    <div class="chart-card chart-wide">
+      <div class="chart-title"><i class="fa-solid fa-layer-group"></i> Segnalazioni per categoria</div>
+      <div class="chart-wrap" id="wrapCategorie"><canvas id="chartCategorie"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title"><i class="fa-solid fa-circle-exclamation"></i> Per urgenza</div>
+      <div class="chart-wrap"><canvas id="chartUrgenza"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title"><i class="fa-solid fa-clipboard-list"></i> Per stato</div>
+      <div class="chart-wrap"><canvas id="chartStato"></canvas></div>
+    </div>
+
+    <div class="chart-card chart-wide">
+      <div class="chart-title"><i class="fa-solid fa-chart-column"></i> Andamento nel tempo</div>
+      <div class="chart-wrap"><canvas id="chartTrend"></canvas></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="js/statistiche.js"></script>
+</body>
+</html>

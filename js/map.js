@@ -398,6 +398,16 @@ function highlightListItem(id) {
 function openInfo()  { document.getElementById('infoOverlay').classList.add('open'); }
 function closeInfo() { document.getElementById('infoOverlay').classList.remove('open'); }
 
+let _statsLoaded = false;
+function openStats() {
+  if (!_statsLoaded) {
+    document.getElementById('statsFrame').src = 'statistiche.html';
+    _statsLoaded = true;
+  }
+  document.getElementById('statsOverlay').classList.add('open');
+}
+function closeStats() { document.getElementById('statsOverlay').classList.remove('open'); }
+
 function openLightbox(url) {
   document.getElementById('lightboxImg').src = url;
   document.getElementById('lightbox').classList.add('open');
@@ -472,7 +482,7 @@ initMap();
 loadData();
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeInfo(); closeResolve(); closeLightbox(); }
+  if (e.key === 'Escape') { closeInfo(); closeResolve(); closeLightbox(); closeStats(); }
 });
 
 // Rileva ?risolvi=TOKEN nell'URL e apre il modal automaticamente

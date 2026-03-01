@@ -23,6 +23,9 @@
   <div class="header-right">
     <a href="segnalazione-civica.html" class="btn-report">+ Nuova segnalazione</a>
     <button class="btn-report btn-resolve" onclick="openResolve('')">✅ <span class="btn-resolve-text">Segna risolta</span></button>
+    <button class="btn-info" onclick="openStats()" title="Statistiche">
+      <i class="fa-solid fa-chart-simple"></i>
+    </button>
     <button class="btn-info" onclick="openInfo()" title="Informazioni sul progetto">
       <i class="fa-solid fa-circle-info"></i>
     </button>
@@ -82,6 +85,16 @@
       ✅ Conferma risoluzione
     </button>
     <div class="resolve-result" id="resolveResult"></div>
+  </div>
+</div>
+
+<!-- STATS MODAL (iframe) -->
+<div class="stats-overlay" id="statsOverlay" onclick="if(event.target===this)closeStats()">
+  <div class="stats-iframe-wrap">
+    <button class="stats-close-btn" onclick="closeStats()" title="Chiudi">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <iframe id="statsFrame" src="" frameborder="0" title="Statistiche SegnalaOra"></iframe>
   </div>
 </div>
 
