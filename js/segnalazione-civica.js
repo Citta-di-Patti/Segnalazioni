@@ -147,7 +147,7 @@ function initMap() {
   map = L.map('map', { maxZoom: 20 }).setView([reportData.lat, reportData.lng], 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 20
+    maxZoom: 19
   }).addTo(map);
 
   marker = L.marker([reportData.lat, reportData.lng], { draggable: true }).addTo(map);
