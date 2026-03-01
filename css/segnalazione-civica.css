@@ -428,6 +428,16 @@ input.invalid, textarea.invalid {
 
 .field-error.visible { display: block; }
 
+.field-error.ok {
+  display: block;
+  color: var(--sage);
+}
+
+input.valid {
+  border-color: var(--sage) !important;
+  background: #f0fff4;
+}
+
 textarea { resize: vertical; min-height: 90px; }
 
 .select-wrap { position: relative; }
@@ -705,6 +715,85 @@ textarea { resize: vertical; min-height: 90px; }
 }
 
 .btn-next:hover { background: var(--amber); }
+
+/* TOKEN ROW (success card) */
+.token-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  background: rgba(61,90,71,0.07);
+  border: 1px solid rgba(61,90,71,0.2);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+}
+
+.token-label { color: #6a7f70; font-weight: 500; }
+
+.token-val {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: var(--ink);
+  word-break: break-all;
+}
+
+.copy-btn-small {
+  background: none;
+  border: 1px solid rgba(26,18,8,0.2);
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  flex-shrink: 0;
+}
+
+.token-hint {
+  font-size: 0.75rem;
+  color: #9a8f80;
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+/* COPY REMINDER */
+.copy-reminder {
+  display: none;
+  background: #fff8e1;
+  border: 1.5px solid #f4c542;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  font-size: 0.82rem;
+  color: #7a5f00;
+  text-align: center;
+  margin: 0.75rem 0;
+  gap: 0.5rem;
+}
+
+.copy-reminder.visible { display: block; }
+
+.copy-reminder-close {
+  display: block;
+  margin: 0.4rem auto 0;
+  background: none;
+  border: 1px solid #c8a800;
+  border-radius: 6px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: #7a5f00;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* FIELD HINT */
+.field-hint {
+  display: block;
+  font-size: 0.76rem;
+  color: #9a8f80;
+  margin-top: 0.3rem;
+}
 
 @media (max-width: 480px) {
   main { padding: 1rem; }

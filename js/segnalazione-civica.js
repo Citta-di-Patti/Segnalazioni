@@ -39,6 +39,8 @@ let _areeAdmin          = [];  // da dati/aree_amministrative.json
 let _socialData         = {}; // da dati/social.json
 let _societaPartecipate = [];  // da dati/società_partecipate.json
 let _ccAreas            = []; // aree aggiunte come CC (array di { email, nome })
+let _emailDebounce      = null;
+let _ticketCopied       = false;
 let reportData = {
   lat: 41.9028,
   lng: 12.4964,
@@ -180,7 +182,7 @@ function getCCEmails() {
   const fromAreas = _ccAreas.map(a => a.email);
   const field = document.getElementById('ccCustomEmails');
   const fromField = field
-    ? field.value.split(',').map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
+    ? field.value.split(/[,;\s]+/).map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
     : [];
   return [...new Set([...fromAreas, ...fromField])];
 }
@@ -408,12 +410,29 @@ function clearFieldError(fieldId) {
   if (err) err.classList.remove('visible');
 }
 
+function onEmailInput() {
+  clearFieldError('email');
+  clearTimeout(_emailDebounce);
+  _emailDebounce = setTimeout(validateEmailField, 650);
+}
+
 function validateEmailField() {
-  const val = document.getElementById('email').value.trim();
-  if (!val || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-    if (val) showFieldError('email'); // mostra errore solo se ha digitato qualcosa
+  const val   = document.getElementById('email').value.trim();
+  const el    = document.getElementById('email');
+  const errEl = document.getElementById('email-error');
+  if (!val) {
+    el.classList.remove('invalid', 'valid');
+    errEl.classList.remove('visible', 'ok');
+    return;
+  }
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+    el.classList.remove('invalid'); el.classList.add('valid');
+    errEl.textContent = '✓ Email valida';
+    errEl.classList.remove('visible'); errEl.classList.add('ok');
   } else {
-    clearFieldError('email');
+    el.classList.add('invalid'); el.classList.remove('valid');
+    errEl.textContent = 'Inserisci un indirizzo email valido (es: nome@dominio.it).';
+    errEl.classList.add('visible'); errEl.classList.remove('ok');
   }
 }
 
@@ -650,7 +669,10 @@ async function sendReport() {
   }
 
   // 3. Schermata di successo
-  document.getElementById('ticketId').textContent = ticketId;
+  _ticketCopied = false;
+  document.getElementById('ticketId').textContent    = ticketId;
+  document.getElementById('resolveToken').textContent = token;
+  document.getElementById('copyReminder').classList.remove('visible');
   document.getElementById('successDetail').textContent =
     'Segnalazione registrata nell\'archivio. I canali selezionati sono stati aperti.';
 
@@ -666,15 +688,30 @@ async function sendReport() {
 function resetAll() { location.reload(); }
 
 function closeSuccess() {
-  const id = document.getElementById('ticketId').textContent;
-  alert(`⚠️ Prima di chiudere copia il tuo ID segnalazione:\n\n${id}\n\nConservalo per seguire l'evoluzione della tua segnalazione.`);
+  if (!_ticketCopied) {
+    document.getElementById('copyReminder').classList.add('visible');
+    return; // attende che l'utente copi prima di chiudere
+  }
   location.reload();
 }
+
+function forceClose() { location.reload(); }
 
 function copyTicketId() {
   const id = document.getElementById('ticketId').textContent;
   navigator.clipboard.writeText(id).then(() => {
+    _ticketCopied = true;
+    document.getElementById('copyReminder').classList.remove('visible');
     const btn = document.getElementById('copyIdBtn');
+    btn.textContent = '✓ Copiato';
+    setTimeout(() => { btn.textContent = '📋 Copia'; }, 1800);
+  });
+}
+
+function copyToken() {
+  const token = document.getElementById('resolveToken').textContent;
+  navigator.clipboard.writeText(token).then(() => {
+    const btn = document.getElementById('copyTokenBtn');
     btn.textContent = '✓ Copiato';
     setTimeout(() => { btn.textContent = '📋 Copia'; }, 1800);
   });

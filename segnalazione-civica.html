@@ -218,7 +218,7 @@
 
       <label>Email * <span style="font-weight:300;font-size:0.75rem;">(ricevi la conferma di invio)</span></label>
       <input type="email" id="email" placeholder="tua@email.it" required
-        oninput="clearFieldError('email')"
+        oninput="onEmailInput()"
         onblur="validateEmailField()">
       <div class="field-error" id="email-error">Inserisci un indirizzo email valido (es: nome@dominio.it).</div>
 
@@ -261,6 +261,7 @@
         <input type="text" id="ccCustomEmails"
           placeholder="Oppure inserisci email@comune.it, altra@email.it …"
           oninput="updatePreview()">
+        <small class="field-hint">Separa più indirizzi con virgola o punto e virgola</small>
       </div>
 
       <label>Condividi sui social</label>
@@ -294,8 +295,18 @@
           📋 Copia
         </button>
       </div>
+      <div class="token-row">
+        <span class="token-label">🔑 Token risoluzione:</span>
+        <span class="token-val" id="resolveToken">—</span>
+        <button id="copyTokenBtn" onclick="copyToken()" class="copy-btn-small" title="Copia token">📋 Copia</button>
+      </div>
+      <p class="token-hint">Conserva questo codice: serve alla PA per marcare la segnalazione come risolta.</p>
       <p id="successDetail" style="margin-bottom:1rem;"></p>
       <div class="channels-sent" id="channelsSent"></div>
+      <div class="copy-reminder" id="copyReminder">
+        💡 Hai copiato il tuo ID segnalazione? Ne avrai bisogno per seguire l'evoluzione.
+        <button class="copy-reminder-close" onclick="forceClose()">Chiudi comunque</button>
+      </div>
       <br>
       <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
         <button class="btn-next" onclick="resetAll()" style="margin:0;">+ Nuova segnalazione</button>
