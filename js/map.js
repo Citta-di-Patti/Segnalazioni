@@ -146,10 +146,16 @@ function parseCSV(text) {
     const vals = parseCSVLine(rows[i]);
     const obj  = {};
     headers.forEach((h, idx) => {
-      obj[h.trim()] = (vals[idx] !== undefined ? vals[idx] : '').trim();
+      obj[h.trim().replace(/^\uFEFF/, '')] = (vals[idx] !== undefined ? vals[idx] : '').trim();
     });
     // Salta righe senza latitudine valida
     if (!obj.Lat || isNaN(parseFloat(obj.Lat))) continue;
+    // Fallback ID univoco se la colonna ID_Segnalazione manca nel foglio
+    if (!obj.ID_Segnalazione) {
+      obj.ID_Segnalazione = obj.Timestamp_UTC
+        ? 'SGN-' + obj.Timestamp_UTC.replace(/\W/g, '')
+        : 'row-' + i;
+    }
     reports.push(obj);
   }
 
