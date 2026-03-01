@@ -1,0 +1,37 @@
+Timestamp_UTC,Data,Ora,Categoria,Categoria_Emoji,Urgenza,Descrizione,Nome_Segnalante,Email_Segnalante,Lat,Long,Indirizzo_Completo,Via,Numero_Civico,CAP,Comune,Provincia,Regione,Fonte_Posizione,Accuratezza_GPS_m,Destinatari,Canale_Email,Canale_WhatsApp,Canale_Twitter,Canale_Facebook,Ha_Immagine,Dimensioni_Immagine,Testo_Messaggio,URL_Segnalazione,URL_Immagine,Stato,Note_Ufficio,Operatore,Data_Presa_Carico,Data_Risoluzione
+2026-03-01T14:34:40.405Z,01/03/2026,15:34,Rifiuti abbandonati,🗑️,Normale,Quisque ac mollis eros. Curabitur aliquet sem sed massa condimentum efficitur non eu lorem. Cras tincidunt mauris dolor. Duis at tempus lectus. ,Gianni,gbvitrano@gmail.com,38.121453,13.36593,"Via Francesco Crispi, La Loggia, I Circoscrizione, Palermo, Sicilia, 90133, Italia",Via Francesco Crispi,,90133,Palermo,Palermo,Sicilia,Manuale,,email,Sì,No,No,No,Sì,1024x1024,"📍 Segnalazione Civica — 🟡 Rifiuti abbandonati
+📌 Luogo: Via Francesco Crispi, La Loggia, I Circoscrizione, Palermo, Sicilia, 90133, Italia
+📝 Note: Quisque ac mollis eros. Curabitur aliquet sem sed massa condimentum efficitur non eu lorem. Cras tincidunt mauris dolor. Duis at tempus lectus. 
+👤 Segnalato da: Gianni
+🕐 01/03/2026, 15:34:40
+#SegnalaOra #Rifiutiabbandonati
+SGN-1772375680405
+
+──────────────────────────────────────
+Per segnare questa segnalazione come RISOLTA:
+https://gbvitrano.github.io/Segnalazioni/index.html?risolvi=a04dbbe6-e696-43a4-8772-8c18d2219921
+──────────────────────────────────────",https://gbvitrano.github.io/Segnalazioni/index.html,,Risolta,,,,01/03/2026
+2026-03-01T15:29:42.397Z,01/03/2026,16:29,Segnaletica danneggiata,🚧,Normale,"Aliquam non tempus libero, vitae tincidunt turpis. Donec vitae tristique nibh. Suspendisse ullamcorper elementum justo et tempor. Aliquam ac urna sit amet dolor semper iaculis non non sapien. Nullam tincidunt mi a volutpat condimentum.",Gianni,gbvitrano@gmail.com,38.115395,13.375935,"Foro Italico Umberto I, Kalsa, I Circoscrizione, Palermo, Sicilia, 90100, Italia",Foro Italico Umberto I,,90100,Palermo,Palermo,Sicilia,Manuale,,email,Sì,No,No,No,Sì,1024x1024,"📍 Segnalazione Civica — 🟡 Segnaletica danneggiata
+📌 Luogo: Foro Italico Umberto I, Kalsa, I Circoscrizione, Palermo, Sicilia, 90100, Italia
+📝 Note: Aliquam non tempus libero, vitae tincidunt turpis. Donec vitae tristique nibh. Suspendisse ullamcorper elementum justo et tempor. Aliquam ac urna sit amet dolor semper iaculis non non sapien. Nullam tincidunt mi a volutpat condimentum.
+👤 Segnalato da: Gianni
+🕐 01/03/2026, 16:29:42
+#SegnalaOra #Segnaleticadanneggiata
+SGN-1772378982397
+
+──────────────────────────────────────
+Per segnare questa segnalazione come RISOLTA:
+https://gbvitrano.github.io/Segnalazioni/index.html?risolvi=a529843e-473c-487e-b25e-f940eff3bd1b
+──────────────────────────────────────",https://gbvitrano.github.io/Segnalazioni/index.html,,Risolta,,,,01/03/2026
+2026-03-01T16:01:11.119Z,01/03/2026,17:01,Immobile pericolante,🏚️,Normale,"Nam sagittis magna pretium orci commodo rutrum. Sed ultrices, massa at porta luctus, lectus velit consectetur justo, at porta arcu neque quis enim. ",Gianni,gbvitrano@gmail.com,38.117267,13.3671,"Letizia, 30, Via Bottai, Kalsa, I Circoscrizione, Palermo, Sicilia, 90133, Italia",Via Bottai,30,90133,Palermo,Palermo,Sicilia,Manuale,,email,Sì,No,No,No,Sì,1280x853,"📍 Segnalazione Civica — 🟡 Immobile pericolante
+📌 Luogo: Letizia, 30, Via Bottai, Kalsa, I Circoscrizione, Palermo, Sicilia, 90133, Italia
+📝 Note: Nam sagittis magna pretium orci commodo rutrum. Sed ultrices, massa at porta luctus, lectus velit consectetur justo, at porta arcu neque quis enim. 
+👤 Segnalato da: Gianni
+🕐 01/03/2026, 17:01:11
+#SegnalaOra #Immobilepericolante
+SGN-1772380871119
+
+──────────────────────────────────────
+Per segnare questa segnalazione come RISOLTA:
+http://127.0.0.1:3000/index.html?risolvi=fd8880cd-28ea-407d-9892-05a6b17ad003
+──────────────────────────────────────",http://127.0.0.1:3000/index.html,,Risolta,,,,01/03/2026
