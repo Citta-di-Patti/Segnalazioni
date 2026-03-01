@@ -887,7 +887,10 @@
       <p id="successDetail" style="margin-bottom:1rem;"></p>
       <div class="channels-sent" id="channelsSent"></div>
       <br>
-      <button class="btn-next" onclick="resetAll()" style="margin:0 auto;">+ Nuova segnalazione</button>
+      <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+        <button class="btn-next" onclick="resetAll()" style="margin:0;">+ Nuova segnalazione</button>
+        <button onclick="closeSuccess()" style="margin:0;padding:0.75rem 1.5rem;border-radius:12px;border:1.5px solid rgba(26,18,8,0.25);background:transparent;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:500;cursor:pointer;color:var(--ink);">✕ Chiudi</button>
+      </div>
     </div>
   </div>
 
@@ -1409,6 +1412,12 @@ async function sendReport() {
 }
 
 function resetAll() { location.reload(); }
+
+function closeSuccess() {
+  const id = document.getElementById('ticketId').textContent;
+  alert(`⚠️ Prima di chiudere copia il tuo ID segnalazione:\n\n${id}\n\nConservalo per seguire l'evoluzione della tua segnalazione.`);
+  location.reload();
+}
 
 function copyTicketId() {
   const id = document.getElementById('ticketId').textContent;
