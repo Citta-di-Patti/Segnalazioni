@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"/>
 <style>
   :root {
     --ink: #1a1208;
@@ -91,6 +92,88 @@
   }
 
   .btn-report:hover { background: #b8700a; }
+
+  /* INFO BUTTON */
+  .btn-info {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    color: var(--paper);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    opacity: 0.7;
+    transition: opacity 0.2s, border-color 0.2s, color 0.2s;
+    flex-shrink: 0;
+  }
+  .btn-info:hover { opacity: 1; border-color: var(--amber); color: var(--amber); }
+
+  /* INFO MODAL */
+  .info-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,18,8,0.65);
+    z-index: 9000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+  }
+  .info-overlay.open { display: flex; }
+  .info-modal {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 14px;
+    max-width: 500px;
+    width: 100%;
+    padding: 2rem 2rem 1.6rem;
+    position: relative;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.45);
+  }
+  .info-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    color: var(--ink);
+    opacity: 0.45;
+    transition: opacity 0.2s;
+    line-height: 1;
+    padding: 0.2rem 0.4rem;
+  }
+  .info-modal-close:hover { opacity: 1; }
+  .info-modal h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.35rem;
+    margin-bottom: 0.8rem;
+    color: var(--amber);
+  }
+  .info-modal p { font-size: 0.87rem; line-height: 1.65; margin-bottom: 0.7rem; }
+  .info-modal ol {
+    padding-left: 1.3rem;
+    font-size: 0.87rem;
+    line-height: 1.75;
+    margin-bottom: 0.7rem;
+  }
+  .info-modal .credits {
+    margin-top: 1.2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--mist);
+    font-size: 0.78rem;
+    color: #777;
+    line-height: 1.7;
+  }
+  .info-modal .credits strong { color: var(--ink); }
+  .info-modal .credits a { color: var(--amber); text-decoration: none; }
+  .info-modal .credits a:hover { text-decoration: underline; }
 
   /* LAYOUT */
   .app-body {
@@ -399,8 +482,34 @@
   </div>
   <div class="header-right">
     <a href="segnalazione-civica.html" class="btn-report">+ Nuova segnalazione</a>
+    <button class="btn-info" onclick="openInfo()" title="Informazioni sul progetto">
+      <i class="fa-solid fa-circle-info"></i>
+    </button>
   </div>
 </header>
+
+<!-- INFO MODAL -->
+<div class="info-overlay" id="infoOverlay" onclick="if(event.target===this)closeInfo()">
+  <div class="info-modal">
+    <button class="info-modal-close" onclick="closeInfo()" title="Chiudi">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <h2>📍 SegnalaOra</h2>
+    <p><strong>SegnalaOra</strong> è uno strumento open source per segnalare problemi del territorio al proprio Comune: buche stradali, rifiuti abbandonati, illuminazione pubblica guasta, verde incurato e molto altro.</p>
+    <p><strong>Come funziona:</strong></p>
+    <ol>
+      <li>Carica una foto del problema — il GPS viene estratto automaticamente dall'immagine</li>
+      <li>Indica la posizione sulla mappa, oppure lascia che il GPS del dispositivo la rilevi</li>
+      <li>Descrivi il problema, scegli la categoria e il livello di urgenza</li>
+      <li>Invia la segnalazione al Comune e condividila su WhatsApp, Twitter o Facebook</li>
+    </ol>
+    <p>Tutte le segnalazioni sono archiviate automaticamente in Google Sheets e visibili su questa mappa pubblica.</p>
+    <div class="credits">
+      <strong>Idea di</strong> Andrea Borruso, Salvatore Fiandaca, Ciro Spataro e Giovan Battista Vitrano<br>
+      By <a href="https://opendatasicilia.it" target="_blank" rel="noopener">@opendatasicilia</a>
+    </div>
+  </div>
+</div>
 
 <div class="app-body">
 
@@ -761,6 +870,10 @@ function highlightListItem(id) {
 // ─────────────────────────────────────────────
 initMap();
 loadData();
+
+function openInfo()  { document.getElementById('infoOverlay').classList.add('open'); }
+function closeInfo() { document.getElementById('infoOverlay').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInfo(); });
 </script>
 </body>
 </html>
