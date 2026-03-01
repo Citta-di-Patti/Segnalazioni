@@ -442,6 +442,105 @@ textarea { resize: vertical; min-height: 90px; }
   font-size: 0.9rem;
 }
 
+/* AREA INFO CARD */
+.area-info {
+  display: none;
+  background: rgba(212,130,10,0.05);
+  border: 1px solid rgba(212,130,10,0.25);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.area-info.visible { display: block; }
+
+.ai-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.25rem;
+  align-items: flex-start;
+}
+.ai-ico {
+  flex-shrink: 0;
+  width: 1.4rem;
+  font-style: normal;
+}
+.ai-pec {
+  font-size: 0.72rem;
+  color: #8a7f70;
+  word-break: break-all;
+}
+
+/* SEZIONE CC */
+.cc-section { margin-top: 1.1rem; }
+
+.cc-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #5a5040;
+  margin-bottom: 0.4rem;
+  margin-top: 0;
+  display: block;
+}
+
+.cc-add-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.cc-add-row .select-wrap { flex: 1; min-width: 0; }
+
+.btn-add-cc {
+  flex-shrink: 0;
+  padding: 0.55rem 0.9rem;
+  background: var(--sage);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.btn-add-cc:hover { background: #2d4435; }
+
+.cc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.cc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(61,90,71,0.09);
+  border: 1px solid rgba(61,90,71,0.22);
+  border-radius: 6px;
+  padding: 0.2rem 0.4rem 0.2rem 0.65rem;
+  font-size: 0.74rem;
+  color: var(--sage);
+  max-width: 100%;
+}
+.cc-tag button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--sage);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.1rem;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.cc-tag button:hover { opacity: 1; }
+
 /* DESTINATARI */
 .recipient-grid {
   display: grid;

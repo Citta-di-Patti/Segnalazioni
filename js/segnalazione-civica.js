@@ -35,6 +35,10 @@ const CONFIG = {
 // ─────────────────────────────────────────────
 let map, marker;
 let currentStep = 1;
+let _areeAdmin          = [];  // da dati/aree_amministrative.json
+let _socialData         = {}; // da dati/social.json
+let _societaPartecipate = [];  // da dati/società_partecipate.json
+let _ccAreas            = []; // aree aggiunte come CC (array di { email, nome })
 let reportData = {
   lat: 41.9028,
   lng: 12.4964,
@@ -54,24 +58,166 @@ let reportData = {
   hasPhoto: false,
 };
 
-// Aggiorna sub-label destinatari con CONFIG
-function initRecipientLabels() {
-  if (CONFIG.comune.emailTecnico) {
-    document.getElementById('rec-email-sub').textContent = CONFIG.comune.emailTecnico;
+// ─────────────────────────────────────────────
+//  CARICAMENTO JSON (aree amministrative + social)
+// ─────────────────────────────────────────────
+async function initFromJSON() {
+  try {
+    const [r1, r2, r3] = await Promise.all([
+      fetch('dati/aree_amministrative.json'),
+      fetch('dati/social.json'),
+      fetch('dati/società_partecipate.json')
+    ]);
+    _areeAdmin          = await r1.json();
+    _socialData         = await r2.json();
+    _societaPartecipate = await r3.json();
+  } catch(e) {
+    console.warn('JSON non caricati:', e);
   }
-  if (CONFIG.comune.whatsapp) {
-    document.getElementById('rec-wa-sub').textContent = CONFIG.comune.whatsapp;
+  populateAreaDropdown();
+  populateSocialDropdown();
+}
+
+function normalizePlatform(name) {
+  const n = name.toLowerCase();
+  if (n.includes('facebook'))  return 'facebook';
+  if (n.includes('twitter') || n.includes(' x')) return 'twitter';
+  if (n.includes('instagram')) return 'instagram';
+  if (n.includes('youtube'))   return 'youtube';
+  if (n.includes('whatsapp'))  return 'whatsapp';
+  return n.replace(/[^a-z]/g, '');
+}
+
+function platformEmoji(key) {
+  return { facebook:'📘', twitter:'🐦', instagram:'📷', youtube:'▶️', whatsapp:'💬' }[key] || '🌐';
+}
+
+function _buildAreaOptions(sel) {
+  // ── Aree Amministrative ──────────────────────────
+  const grp1 = document.createElement('optgroup');
+  grp1.label = 'Aree Amministrative';
+  _areeAdmin.forEach((a, i) => {
+    const opt = document.createElement('option');
+    opt.value = 'area:' + i;
+    opt.textContent = a.nome;
+    grp1.appendChild(opt);
+  });
+  sel.appendChild(grp1);
+
+  // ── Società Partecipate ──────────────────────────
+  if (_societaPartecipate.length) {
+    const grp2 = document.createElement('optgroup');
+    grp2.label = 'Società Partecipate';
+    _societaPartecipate.forEach((s, i) => {
+      const opt = document.createElement('option');
+      opt.value = 'societa:' + i;
+      opt.textContent = s.nome;
+      grp2.appendChild(opt);
+    });
+    sel.appendChild(grp2);
   }
-  if (CONFIG.comune.twitter) {
-    document.getElementById('rec-tw-sub').textContent = CONFIG.comune.twitter;
+}
+
+// Normalizza i dati di un'area/società dal valore composto "src:index"
+function _getAreaByValue(val) {
+  if (!val) return null;
+  const colon = val.indexOf(':');
+  const src = val.substring(0, colon);
+  const i   = parseInt(val.substring(colon + 1));
+  if (src === 'area') {
+    const a = _areeAdmin[i];
+    if (!a) return null;
+    return { nome: a.nome, email: a.email, pec: a.pec, indirizzo: a.indirizzo, telefono: a.telefono };
   }
-  if (CONFIG.comune.emailPolizia) {
-    document.getElementById('rec-pol-sub').textContent = CONFIG.comune.emailPolizia;
+  if (src === 'societa') {
+    const s = _societaPartecipate[i];
+    if (!s) return null;
+    return {
+      nome:       s.nome,
+      nome_esteso: s.nome_esteso || '',
+      email:      Array.isArray(s.email) ? s.email[0] : s.email,
+      pec:        Array.isArray(s.pec)   ? s.pec[0]   : s.pec,
+      indirizzo:  s.indirizzo,
+      telefono:   s.telefono,
+    };
   }
-  // Nascondi avviso config se form URL è configurato
-  if (CONFIG.googleFormUrl) {
-    document.getElementById('configNotice').style.display = 'none';
+  return null;
+}
+
+function populateAreaDropdown() {
+  _buildAreaOptions(document.getElementById('areaSelect'));
+  _buildAreaOptions(document.getElementById('ccAreaSelect'));
+}
+
+// ── CC helpers ────────────────────────────────────────────
+function addAreaAsCC() {
+  const sel  = document.getElementById('ccAreaSelect');
+  const area = _getAreaByValue(sel.value);
+  if (!area || !area.email) { sel.value = ''; return; }
+  // Evita duplicati e conflitto con destinatario principale
+  if (_ccAreas.find(a => a.email === area.email)) { sel.value = ''; return; }
+  _ccAreas.push({ email: area.email, nome: area.nome });
+  sel.value = '';
+  renderCCTags();
+  updatePreview();
+}
+
+function removeCCArea(email) {
+  _ccAreas = _ccAreas.filter(a => a.email !== email);
+  renderCCTags();
+  updatePreview();
+}
+
+function renderCCTags() {
+  const wrap = document.getElementById('ccTags');
+  wrap.innerHTML = _ccAreas.map(a => {
+    const label = a.nome.length > 35 ? a.nome.substring(0, 35) + '…' : a.nome;
+    return `<span class="cc-tag">${label}<button type="button" onclick="removeCCArea('${a.email}')" title="Rimuovi">×</button></span>`;
+  }).join('');
+}
+
+function getCCEmails() {
+  const fromAreas = _ccAreas.map(a => a.email);
+  const field = document.getElementById('ccCustomEmails');
+  const fromField = field
+    ? field.value.split(',').map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
+    : [];
+  return [...new Set([...fromAreas, ...fromField])];
+}
+
+function populateSocialDropdown() {
+  const sel = document.getElementById('socialSelect');
+  (_socialData.social || []).forEach(s => {
+    const key = normalizePlatform(s.piattaforma);
+    const opt = document.createElement('option');
+    opt.value              = key;
+    opt.dataset.url        = s.url    || '';
+    opt.dataset.handle     = s.handle || '';
+    opt.dataset.piattaforma = s.piattaforma;
+    opt.textContent = platformEmoji(key) + '  ' + s.piattaforma + (s.handle ? '  ·  @' + s.handle : '');
+    sel.appendChild(opt);
+  });
+}
+
+function updateAreaInfo() {
+  const sel  = document.getElementById('areaSelect');
+  const info = document.getElementById('areaInfo');
+  const area = _getAreaByValue(sel.value);
+  if (!area) {
+    info.innerHTML = '';
+    info.classList.remove('visible');
+    return;
   }
+  const tel = (area.telefono || []).join(' · ');
+  info.innerHTML = `
+    ${area.nome_esteso ? `<div class="ai-row"><span class="ai-ico">🏢</span><span>${area.nome_esteso}</span></div>` : ''}
+    <div class="ai-row"><span class="ai-ico">📍</span><span>${area.indirizzo || ''}</span></div>
+    ${tel ? `<div class="ai-row"><span class="ai-ico">📞</span><span>${tel}</span></div>` : ''}
+    <div class="ai-row"><span class="ai-ico">✉️</span><span>${area.email || ''}</span></div>
+    ${area.pec ? `<div class="ai-row"><span class="ai-ico">🔒</span><span class="ai-pec">${area.pec}</span></div>` : ''}
+  `;
+  info.classList.add('visible');
+  updatePreview();
 }
 
 // ─────────────────────────────────────────────
@@ -296,21 +442,6 @@ function goStep(n) {
 }
 
 // ─────────────────────────────────────────────
-//  DESTINATARI
-// ─────────────────────────────────────────────
-function toggleRec(el) {
-  el.classList.toggle('selected');
-}
-
-function getSelectedChannels() {
-  const selected = [];
-  document.querySelectorAll('.recipient-item.selected').forEach(el => {
-    selected.push(el.dataset.channel);
-  });
-  return selected;
-}
-
-// ─────────────────────────────────────────────
 //  ANTEPRIMA MESSAGGIO
 // ─────────────────────────────────────────────
 function updatePreview() {
@@ -340,7 +471,6 @@ async function sendReport() {
   const cat = document.getElementById('categoria').value;
   if (!cat) { alert('Seleziona una categoria.'); return; }
 
-  // Controllo difensivo (la validazione è già in goStep ma per sicurezza)
   const nome = document.getElementById('nome').value.trim();
   const emailSegnalante = document.getElementById('email').value.trim();
   if (!nome || !emailSegnalante || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailSegnalante)) {
@@ -349,11 +479,17 @@ async function sendReport() {
     return;
   }
 
+  // Area amministrativa / società partecipata selezionata e social
+  const areaData = _getAreaByValue(document.getElementById('areaSelect').value);
+  const socialSel = document.getElementById('socialSelect');
+  const socialKey = socialSel.value;
+  const socialOpt = socialKey ? socialSel.selectedOptions[0] : null;
+
   const btn = document.getElementById('sendBtn');
   btn.disabled = true;
   btn.textContent = '⏳ Invio in corso...';
 
-  const now = new Date();
+  const now      = new Date();
   const ticketId = 'SGN-' + now.getTime();
 
   // Token segreto monouso — non finisce mai nel CSV pubblico, solo nell'email alla PA
@@ -361,50 +497,38 @@ async function sendReport() {
     ? crypto.randomUUID()
     : 'xxxx-xxxx-xxxx-xxxx'.replace(/x/g, () =>
         (Math.random() * 16 | 0).toString(16));
-  const descr = document.getElementById('descr').value;
-  const urgenza = document.getElementById('urgenza').value;
-  const addr = document.getElementById('addressInput').value || reportData.address;
-  const channels = getSelectedChannels();
 
-  // Emoji categoria
+  const descr   = document.getElementById('descr').value;
+  const urgenza = document.getElementById('urgenza').value;
+  const addr    = document.getElementById('addressInput').value || reportData.address;
+
   const emojiMap = {
-    'Buche e dissesti stradali': '🕳️',
-    'Illuminazione pubblica guasta': '💡',
-    'Rifiuti abbandonati': '🗑️',
-    'Alberi e verde pubblico': '🌳',
-    'Perdite idriche': '🚰',
-    'Deiezioni non raccolte': '🐕',
-    'Segnaletica danneggiata': '🚧',
-    'Immobile pericolante': '🏚️',
-    'Barriere architettoniche': '♿',
-    'Inquinamento acustico': '🔊',
-    'Veicoli abbandonati': '🛺',
-    'Degrado e sicurezza': '💊',
+    'Buche e dissesti stradali': '🕳️', 'Illuminazione pubblica guasta': '💡',
+    'Rifiuti abbandonati': '🗑️',        'Alberi e verde pubblico': '🌳',
+    'Perdite idriche': '🚰',             'Deiezioni non raccolte': '🐕',
+    'Segnaletica danneggiata': '🚧',     'Immobile pericolante': '🏚️',
+    'Barriere architettoniche': '♿',    'Inquinamento acustico': '🔊',
+    'Veicoli abbandonati': '🛺',         'Degrado e sicurezza': '💊',
     'Altro': '📦'
   };
   const catEmoji = emojiMap[cat] || '📌';
   const urgLabel = urgenza === 'Alta' ? '🔴 URGENTE — ' : urgenza === 'Bassa' ? '🟢 ' : '🟡 ';
 
-  // URL pubblico della mappa (index.html), non del form
   const siteUrl = CONFIG.comune.siteUrl
     || window.location.href.replace('segnalazione-civica.html', 'index.html').split('?')[0];
 
-  // URL atteso dell'immagine su GitHub Pages (pattern fisso: img/{ticketId}.jpg)
-  // Viene incluso nel payload anche se la risposta Apps Script è opaca (no-cors)
   const siteBase = siteUrl.endsWith('index.html')
     ? siteUrl.slice(0, -'index.html'.length)
     : siteUrl.replace(/\/?$/, '/');
-  const predictedImgUrl = reportData.hasPhoto
-    ? siteBase + 'img/' + ticketId + '.jpg'
-    : null;
+  const predictedImgUrl = reportData.hasPhoto ? siteBase + 'img/' + ticketId + '.jpg' : null;
 
-  // URL che la PA può aprire per segnare la segnalazione come risolta
   const resolveUrl = window.location.href.split('segnalazione-civica.html')[0] + 'index.html?risolvi=' + token;
 
   const testoMessaggio = [
     `📍 Segnalazione Civica — ${urgLabel}${cat}`,
     `📌 Luogo: ${addr}`,
     descr ? `📝 Note: ${descr}` : '',
+    areaData ? `🏛️ Destinatario: ${areaData.nome}` : '',
     `👤 Segnalato da: ${nome}`,
     `🕐 ${now.toLocaleString('it-IT')}`,
     `#SegnalaOra #${cat.replace(/[^a-zA-Z]/g,'')}`,
@@ -415,110 +539,100 @@ async function sendReport() {
     `──────────────────────────────────────`
   ].filter(Boolean).join('\n');
 
-  // 1. POST JSON ad Apps Script (se configurato)
+  // 1. POST JSON ad Apps Script
   if (CONFIG.appsScriptUrl) {
     const payload = {
-      ID_Segnalazione:   ticketId,
-      Timestamp_UTC:     now.toISOString(),
-      Data:              now.toLocaleDateString('it-IT'),
-      Ora:               now.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
-      Categoria:         cat,
-      Categoria_Emoji:   catEmoji,
-      Urgenza:           urgenza,
-      Descrizione:       descr,
-      Nome_Segnalante:   nome,
-      Email_Segnalante:  emailSegnalante,
-      Lat:               reportData.lat.toFixed(6),
-      Long:              reportData.lng.toFixed(6),
+      ID_Segnalazione:    ticketId,
+      Timestamp_UTC:      now.toISOString(),
+      Data:               now.toLocaleDateString('it-IT'),
+      Ora:                now.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
+      Categoria:          cat,
+      Categoria_Emoji:    catEmoji,
+      Urgenza:            urgenza,
+      Descrizione:        descr,
+      Nome_Segnalante:    nome,
+      Email_Segnalante:   emailSegnalante,
+      Lat:                reportData.lat.toFixed(6),
+      Long:               reportData.lng.toFixed(6),
       Indirizzo_Completo: addr,
-      Via:               reportData.via,
-      Numero_Civico:     reportData.civico,
-      CAP:               reportData.cap,
-      Comune:            reportData.comune,
-      Provincia:         reportData.provincia,
-      Regione:           reportData.regione,
-      Fonte_Posizione:   reportData.fontePosizione,
-      Accuratezza_GPS_m: String(reportData.accuratezza),
-      Destinatari:       channels.join(';'),
-      Canale_Email:      channels.includes('email') ? 'Sì' : 'No',
-      Canale_WhatsApp:   channels.includes('whatsapp') ? 'Sì' : 'No',
-      Canale_Twitter:    channels.includes('twitter') ? 'Sì' : 'No',
-      Canale_Facebook:   channels.includes('facebook') ? 'Sì' : 'No',
-      Ha_Immagine:       reportData.hasPhoto ? 'Sì' : 'No',
+      Via:                reportData.via,
+      Numero_Civico:      reportData.civico,
+      CAP:                reportData.cap,
+      Comune:             reportData.comune,
+      Provincia:          reportData.provincia,
+      Regione:            reportData.regione,
+      Fonte_Posizione:    reportData.fontePosizione,
+      Accuratezza_GPS_m:  String(reportData.accuratezza),
+      Area_Destinataria:  areaData ? areaData.nome : '',
+      CC_Destinatari:     getCCEmails().join(';'),
+      Destinatari:        [areaData ? areaData.nome : '', ...getCCEmails(), socialKey].filter(Boolean).join(';'),
+      Canale_Email:       areaData ? 'Sì' : 'No',
+      Canale_WhatsApp:    'No',
+      Canale_Twitter:     socialKey === 'twitter'  ? 'Sì' : 'No',
+      Canale_Facebook:    socialKey === 'facebook' ? 'Sì' : 'No',
+      Ha_Immagine:        reportData.hasPhoto ? 'Sì' : 'No',
       Dimensioni_Immagine: reportData.photoDims,
-      Testo_Messaggio:   testoMessaggio,
-      URL_Segnalazione:  siteUrl,
-      Stato:             'Nuova',
-      Token_Risoluzione: token,
-      // URL già calcolato lato browser — finisce in Google Sheets anche con risposta no-cors opaca
+      Testo_Messaggio:    testoMessaggio,
+      URL_Segnalazione:   siteUrl,
+      Stato:              'Nuova',
+      Token_Risoluzione:  token,
       ...(predictedImgUrl ? { URL_Immagine: predictedImgUrl } : {}),
-      // Immagine in base64 — Apps Script la carica su GitHub tramite GitHub API
       ...(reportData.photoResized ? { imageBase64: reportData.photoResized } : {}),
     };
-
     try {
       await fetch(CONFIG.appsScriptUrl, {
-        method: 'POST',
-        mode: 'no-cors',
+        method: 'POST', mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-    } catch(e) {
-      // no-cors: risposta opaque, il dato arriva ugualmente
-    }
+    } catch(e) {}
   }
 
   // 2. Apri canali selezionati
   const channelsBadges = [];
   const testoBreve = encodeURIComponent(testoMessaggio.substring(0, 280));
-  const urlEnc = encodeURIComponent(siteUrl);
-
-  // Piccola pausa tra le aperture per evitare popup blocker
+  const urlEnc     = encodeURIComponent(siteUrl);
   const delay = ms => new Promise(r => setTimeout(r, ms));
 
-  if (channels.includes('email')) {
-    const subject = encodeURIComponent(`[SegnalaOra] ${cat} — ${ticketId}`);
-    const body = encodeURIComponent(testoMessaggio + '\n\nInviato tramite SegnalaOra');
-    window.location.href = `mailto:${CONFIG.comune.emailTecnico}?subject=${subject}&body=${body}`;
-    channelsBadges.push('🏛️ Email Comune');
+  // Email (destinatario principale + CC)
+  const ccEmails = getCCEmails().filter(e => e !== (areaData ? areaData.email : ''));
+  const toEmail  = areaData ? areaData.email : (ccEmails.shift() || '');
+
+  if (toEmail) {
+    const subject  = encodeURIComponent(`[SegnalaOra] ${cat} — ${ticketId}`);
+    const body     = encodeURIComponent(testoMessaggio + '\n\nInviato tramite SegnalaOra');
+    const ccParam  = ccEmails.length ? '&cc=' + encodeURIComponent(ccEmails.join(',')) : '';
+    window.location.href = `mailto:${toEmail}?subject=${subject}${ccParam}&body=${body}`;
+    const nomeBreve = areaData
+      ? (areaData.nome.length > 40 ? areaData.nome.substring(0, 40) + '…' : areaData.nome)
+      : toEmail;
+    channelsBadges.push('🏛️ ' + nomeBreve);
+    if (ccEmails.length) channelsBadges.push(`+${ccEmails.length} CC`);
     await delay(800);
   }
 
-  if (channels.includes('polizia')) {
-    const subject = encodeURIComponent(`[SegnalaOra] ${cat} — ${ticketId}`);
-    const body = encodeURIComponent(testoMessaggio);
-    window.open(`mailto:${CONFIG.comune.emailPolizia}?subject=${subject}&body=${body}`, '_blank');
-    channelsBadges.push('🚓 Polizia Locale');
-    await delay(500);
-  }
-
-  if (channels.includes('whatsapp') && CONFIG.comune.whatsapp) {
-    const waNum = CONFIG.comune.whatsapp.replace(/\D/g, '');
-    window.open(`https://wa.me/${waNum}?text=${testoBreve}`, '_blank');
-    channelsBadges.push('💬 WhatsApp');
-    await delay(500);
-  }
-
-  if (channels.includes('twitter')) {
-    const tweetText = encodeURIComponent(
-      `${urgLabel}${cat}\n📌 ${reportData.via || reportData.comune}\n${CONFIG.comune.twitter}\n#SegnalaOra\n${ticketId}`
-    );
-    window.open(`https://twitter.com/intent/tweet?text=${tweetText}&url=${urlEnc}`, '_blank');
-    channelsBadges.push('🐦 Twitter/X');
-    await delay(500);
-  }
-
-  if (channels.includes('facebook')) {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${urlEnc}&quote=${testoBreve}`, '_blank');
-    channelsBadges.push('📘 Facebook');
+  // Social selezionato
+  if (socialKey && socialOpt) {
+    const handle   = socialOpt.dataset.handle;
+    const pageUrl  = socialOpt.dataset.url;
+    const nomePiattaforma = socialOpt.dataset.piattaforma;
+    if (socialKey === 'facebook') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${urlEnc}&quote=${testoBreve}`, '_blank');
+    } else if (socialKey === 'twitter') {
+      const tweetText = encodeURIComponent(
+        `${urgLabel}${cat}\n📌 ${reportData.via || reportData.comune}\n@${handle}\n#SegnalaOra\n${ticketId}`
+      );
+      window.open(`https://twitter.com/intent/tweet?text=${tweetText}&url=${urlEnc}`, '_blank');
+    } else {
+      window.open(pageUrl, '_blank');
+    }
+    channelsBadges.push(platformEmoji(socialKey) + ' ' + nomePiattaforma);
   }
 
   // 3. Schermata di successo
   document.getElementById('ticketId').textContent = ticketId;
-  const detail = CONFIG.googleFormUrl
-    ? 'Segnalazione registrata nell\'archivio e canali di comunicazione aperti.'
-    : 'Canali di comunicazione aperti. Configura Google Form per l\'archiviazione automatica.';
-  document.getElementById('successDetail').textContent = detail;
+  document.getElementById('successDetail').textContent =
+    'Segnalazione registrata nell\'archivio. I canali selezionati sono stati aperti.';
 
   const badgesEl = document.getElementById('channelsSent');
   badgesEl.innerHTML = channelsBadges.map(b => `<span class="channel-badge">${b}</span>`).join('');
@@ -567,7 +681,7 @@ function showConfigHelp() {
 // ─────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────
-initRecipientLabels();
+initFromJSON();
 document.getElementById('s1').classList.add('active');
 
 function openInfo()  { document.getElementById('infoOverlay').classList.add('open'); }

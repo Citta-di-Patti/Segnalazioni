@@ -194,63 +194,43 @@
       <span class="icon">📤</span>
       <div>
         <h2>Scegli dove inviare</h2>
-        <p>Seleziona uno o più canali di invio</p>
+        <p>Seleziona l'area amministrativa e/o un canale social</p>
       </div>
     </div>
     <div class="card-body">
 
-      <div class="config-notice" id="configNotice">
-        <strong>⚙️ Configurazione richiesta</strong>
-        Apri il file HTML e compila la sezione <code>CONFIG</code> con i dati del tuo comune
-        (email uffici, numeri WhatsApp, handle social, URL Apps Script).
-        <a href="#" onclick="showConfigHelp(); return false;" style="color: var(--amber);">Come fare →</a>
+      <label>Destinatario principale (A:)</label>
+      <div class="select-wrap">
+        <select id="areaSelect" onchange="updateAreaInfo()">
+          <option value="">— Seleziona area —</option>
+        </select>
+      </div>
+      <div class="area-info" id="areaInfo"></div>
+
+      <div class="cc-section">
+        <label class="cc-label">Per conoscenza (CC)</label>
+        <div class="cc-add-row">
+          <div class="select-wrap">
+            <select id="ccAreaSelect">
+              <option value="">— Aggiungi area dalla lista —</option>
+            </select>
+          </div>
+          <button class="btn-add-cc" type="button" onclick="addAreaAsCC()">+ Aggiungi</button>
+        </div>
+        <div class="cc-tags" id="ccTags"></div>
+        <input type="text" id="ccCustomEmails"
+          placeholder="Oppure inserisci email@comune.it, altra@email.it …"
+          oninput="updatePreview()">
       </div>
 
-      <label>Destinatari</label>
-      <div class="recipient-grid" id="recipientGrid">
-        <label class="recipient-item selected" onclick="toggleRec(this)" data-channel="email">
-          <input type="checkbox" checked>
-          <span class="ri-icon">🏛️</span>
-          <div>
-            <div class="ri-name">Comune</div>
-            <div class="ri-sub" id="rec-email-sub">Email ufficio tecnico</div>
-          </div>
-        </label>
-        <label class="recipient-item" onclick="toggleRec(this)" data-channel="whatsapp">
-          <input type="checkbox">
-          <span class="ri-icon">💬</span>
-          <div>
-            <div class="ri-name">WhatsApp</div>
-            <div class="ri-sub" id="rec-wa-sub">Numero segnalazioni</div>
-          </div>
-        </label>
-        <label class="recipient-item" onclick="toggleRec(this)" data-channel="twitter">
-          <input type="checkbox">
-          <span class="ri-icon">🐦</span>
-          <div>
-            <div class="ri-name">X / Twitter</div>
-            <div class="ri-sub" id="rec-tw-sub">Account comune</div>
-          </div>
-        </label>
-        <label class="recipient-item" onclick="toggleRec(this)" data-channel="facebook">
-          <input type="checkbox">
-          <span class="ri-icon">📘</span>
-          <div>
-            <div class="ri-name">Facebook</div>
-            <div class="ri-sub">Condividi sulla pagina</div>
-          </div>
-        </label>
-        <label class="recipient-item" onclick="toggleRec(this)" data-channel="polizia">
-          <input type="checkbox">
-          <span class="ri-icon">🚓</span>
-          <div>
-            <div class="ri-name">Polizia Locale</div>
-            <div class="ri-sub" id="rec-pol-sub">Email ufficio</div>
-          </div>
-        </label>
+      <label>Condividi sui social</label>
+      <div class="select-wrap">
+        <select id="socialSelect">
+          <option value="">— Nessuno —</option>
+        </select>
       </div>
 
-      <label style="margin-top:1.5rem;">Anteprima messaggio</label>
+      <label style="margin-top:1.5rem">Anteprima messaggio</label>
       <div class="preview-box" id="previewBox">
         Compila i dettagli nei passi precedenti per vedere il messaggio.
       </div>
