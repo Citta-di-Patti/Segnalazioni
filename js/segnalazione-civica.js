@@ -481,6 +481,7 @@ async function sendReport() {
       Dimensioni_Immagine: reportData.photoDims,
       Testo_Messaggio:    testoMessaggio,
       URL_Segnalazione:   siteUrl,
+      Email_Destinatario: toEmail,
       Stato:              'Nuova',
       Token_Risoluzione:  token,
       ...(predictedImgUrl ? { URL_Immagine: predictedImgUrl } : {}),
@@ -495,15 +496,11 @@ async function sendReport() {
     } catch(e) {}
   }
 
-  // 2. Apri email
+  // 2. Canali di invio
   const channelsBadges = [];
   if (toEmail) {
-    const subject = encodeURIComponent(`[SegnalaOra] ${cat} — ${ticketId}`);
-    const body    = encodeURIComponent(testoMessaggio + '\n\nInviato tramite SegnalaOra');
-    window.location.href = `mailto:${toEmail}?subject=${subject}&body=${body}`;
     const nomeBreve = destNome.length > 40 ? destNome.substring(0, 40) + '…' : destNome;
     channelsBadges.push('🏛️ ' + (nomeBreve || toEmail));
-    await new Promise(r => setTimeout(r, 800));
   }
 
   // 3. Social sharing (se selezionato)
@@ -528,7 +525,7 @@ async function sendReport() {
       bluesky:  `https://bsky.app/intent/compose?text=${txt}`,
     };
     const names = { twitter: 'X/Twitter', whatsapp: 'WhatsApp', facebook: 'Facebook', telegram: 'Telegram', bluesky: 'Bluesky' };
-    let delay = toEmail ? 1000 : 200;
+    let delay = 200;
     for (const p of _socialPlatforms) {
       setTimeout(() => window.open(urls[p], '_blank'), delay);
       channelsBadges.push('📱 ' + names[p]);
@@ -543,9 +540,6 @@ async function sendReport() {
   document.getElementById('copyReminder').classList.remove('visible');
   document.getElementById('successDetail').textContent =
     'Segnalazione registrata nell\'archivio. L\'ufficio competente è stato contattato.';
-
-  const warnBanner = document.getElementById('emailWarnBanner');
-  if (warnBanner) warnBanner.style.display = toEmail ? 'block' : 'none';
 
   const badgesEl = document.getElementById('channelsSent');
   badgesEl.innerHTML = channelsBadges.map(b => `<span class="channel-badge">✓ ${b}</span>`).join('');

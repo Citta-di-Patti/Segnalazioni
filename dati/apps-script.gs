@@ -11,6 +11,15 @@ const SHEET_ID = '1Wy86M342so7EHLi3F-G5UNvXFq058Zr5EKAPhjNS3FM';
 // Nome del foglio (tab in basso nel foglio)
 const SHEET_NAME = 'Main';
 
+// ─── Configurazione email ─────────────────────────────────────
+// Nome del comune che appare nel campo "Da:" delle email inviate
+const NOME_COMUNE = 'XXXX';           // ← personalizza: es. 'Palermo'
+
+// Indirizzo replyTo per le email al segnalante (opzionale).
+// Se impostato, appare come "Rispondi a:" nella mail di conferma al cittadino.
+// Non serve configurare alias Gmail: con noReply:true il mittente reale è sempre nascosto.
+const EMAIL_NOREPLY = '';             // ← es. 'noreply@comune.it'
+
 // ─── Configurazione GitHub per upload immagini ───────────────
 //  SETUP (una tantum):
 //  1. Genera un fine-grained PAT su github.com → Settings → Developer settings →
@@ -131,7 +140,29 @@ function doPost(e) {
     const row = headers.map(col => data[col] !== undefined ? data[col] : '');
     sheet.appendRow(row);
 
+    const mittente = `SegnalaOra — Comune di ${NOME_COMUNE}`;
+
+    // Email all'ufficio PA (solo se è stato fornito l'indirizzo del destinatario)
+    // noReply:true → Google usa un relay anonimo: il vero account Gmail non è visibile
+    // replyTo → quando la PA risponde, la risposta arriva direttamente al cittadino
+    if (data.Email_Destinatario && data.Testo_Messaggio) {
+      try {
+        const subjectPA = `[SegnalaOra] ${data.Categoria_Emoji || ''}${data.Categoria} — ${data.ID_Segnalazione}`;
+        MailApp.sendEmail({
+          to:       data.Email_Destinatario,
+          subject:  subjectPA,
+          body:     data.Testo_Messaggio,
+          name:     mittente,
+          noReply:  true,
+          replyTo:  data.Email_Segnalante || '',
+        });
+      } catch(mailErr) {
+        // Non bloccare l'invio se l'email alla PA fallisce
+      }
+    }
+
     // Email di conferma al segnalante (solo se ha fornito l'email)
+    // noReply:true → il segnalante non vede l'account Google proprietario dello script
     if (data.Email_Segnalante) {
       try {
         const subject = `[SegnalaOra] Segnalazione ricevuta — ${data.ID_Segnalazione}`;
@@ -147,14 +178,17 @@ function doPost(e) {
           ``,
           `Conserva questo ID per seguire l'evoluzione della segnalazione.`,
           ``,
-          `— SegnalaOra`,
+          `— ${mittente}`,
         ].join('\n');
-        GmailApp.sendEmail(data.Email_Segnalante, subject, body, {
-          name: 'SegnalaOra (non rispondere)',
-          replyTo: 'noreply@segnalaora.invalid',
+        MailApp.sendEmail({
+          to:      data.Email_Segnalante,
+          subject: subject,
+          body:    body,
+          name:    mittente,
+          noReply: true,
         });
       } catch(mailErr) {
-        // Non bloccare l'invio se l'email fallisce
+        // Non bloccare l'invio se l'email al segnalante fallisce
       }
     }
 
