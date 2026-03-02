@@ -350,7 +350,7 @@ function makePopupHTML(r) {
   const addrShort = (r.Via ? r.Via + (r.Numero_Civico ? ' ' + r.Numero_Civico : '') + ', ' : '') +
                     (r.Comune || r.Indirizzo_Completo || '');
 
-  let html = `<div class="popup-cat">${r.Categoria_Emoji || '📌'} ${r.Categoria}</div>`;
+  let html = `<div class="popup-cat">${catIcon(r.Categoria_Emoji)} ${r.Categoria}</div>`;
   html += `<div class="popup-row"><span>📌</span><span>${addrShort || r.Indirizzo_Completo}</span></div>`;
   html += `<div class="popup-row"><span>📅</span><span>${r.Data} ${r.Ora || ''}</span></div>`;
   html += `<div class="popup-row">
@@ -372,6 +372,13 @@ function makePopupHTML(r) {
       onerror="this.style.display='none'">`;
   }
   return html;
+}
+
+function catIcon(val) {
+  if (!val) return '📌';
+  return val.startsWith('fa-')
+    ? `<i class="${val}"></i>`
+    : val;
 }
 
 function makeStatoBadge(stato) {
@@ -400,7 +407,7 @@ function renderList() {
     el.id = 'ri-' + r.ID_Segnalazione;
     el.innerHTML = `
       <div class="ri-top">
-        <span class="ri-emoji">${r.Categoria_Emoji || '📌'}</span>
+        <span class="ri-emoji">${catIcon(r.Categoria_Emoji)}</span>
         <span class="ri-cat">${r.Categoria}</span>
         <div class="urgency-dot ${urg}"></div>
       </div>

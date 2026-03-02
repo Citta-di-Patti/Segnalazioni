@@ -21,7 +21,7 @@ const CONFIG = {
 // ─────────────────────────────────────────────
 let map, marker;
 let _destinatari     = [];   // da dati/destinatari.json
-let _selectedDest    = null; // { id, nome, descrizione, email, icon, custom? }
+let _selectedDests   = [];   // [{ id, nome, descrizione, email, icon, custom? }, …]
 let _emailDebounce   = null;
 let _ticketCopied    = false;
 let _positionSet     = false;
@@ -90,18 +90,25 @@ function toggleDestExpand() {
 }
 
 function selectDest(id) {
-  _selectedDest = _destinatari.find(d => d.id === id) || null;
+  const dest = _destinatari.find(d => d.id === id);
+  if (!dest) return;
 
-  document.querySelectorAll('.dest-btn').forEach(b => b.classList.remove('selected'));
-  if (_selectedDest) document.getElementById('dest-' + id).classList.add('selected');
+  const idx = _selectedDests.findIndex(d => d.id === id);
+  if (idx === -1) {
+    _selectedDests.push(dest);
+    document.getElementById('dest-' + id).classList.add('selected');
+  } else {
+    _selectedDests.splice(idx, 1);
+    document.getElementById('dest-' + id).classList.remove('selected');
+  }
 
-  // Nascondi/mostra campo email custom
+  // Mostra campo email custom solo se "Altro" è tra i selezionati
+  const hasCustom = _selectedDests.some(d => d.custom);
   const customRow = document.getElementById('customEmailRow');
-  if (customRow) customRow.style.display = (_selectedDest && _selectedDest.custom) ? 'block' : 'none';
+  if (customRow) customRow.style.display = hasCustom ? 'block' : 'none';
+  if (!hasCustom) clearFieldError('customEmail');
 
-  // Pulisci eventuali errori
   document.getElementById('dest-error').classList.remove('visible');
-  if (!_selectedDest || !_selectedDest.custom) clearFieldError('customEmail');
 }
 
 function onCustomEmailInput() {
@@ -349,21 +356,21 @@ async function sendReport() {
     hasError = true;
   }
 
-  if (!_selectedDest) {
+  if (_selectedDests.length === 0) {
     document.getElementById('dest-error').classList.add('visible');
     if (!hasError) document.querySelector('.form-section:has(#destGrid)') && document.querySelector('.form-section:has(#destGrid)').scrollIntoView({ behavior: 'smooth', block: 'center' });
     hasError = true;
   }
 
-  // Se destinatario custom, verifica email custom
-  let toEmail = _selectedDest ? _selectedDest.email : '';
-  if (_selectedDest && _selectedDest.custom) {
+  // Raccolta email: una per ogni destinatario + eventuale email custom
+  const toEmails = _selectedDests.filter(d => !d.custom && d.email).map(d => d.email);
+  if (_selectedDests.some(d => d.custom)) {
     const customEmail = document.getElementById('customEmail').value.trim();
     if (!customEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customEmail)) {
       showFieldError('customEmail', 'Inserisci un indirizzo email valido.');
       hasError = true;
     } else {
-      toEmail = customEmail;
+      toEmails.push(customEmail);
     }
   }
 
@@ -414,8 +421,10 @@ async function sendReport() {
     ? crypto.randomUUID()
     : 'xxxx-xxxx-xxxx-xxxx'.replace(/x/g, () => (Math.random() * 16 | 0).toString(16));
 
-  const cat      = _selectedDest ? (_selectedDest.categoria || _selectedDest.nome) : 'Altro';
-  const catEmoji = _selectedDest ? _selectedDest.icon : '📌';
+  const cat      = _selectedDests.length > 0
+    ? _selectedDests.map(d => d.categoria || d.nome).join(', ')
+    : 'Altro';
+  const catEmoji = _selectedDests.length > 0 ? _selectedDests[0].icon : '📌';
   const urgenza  = document.getElementById('urgenza').value;
   const addr     = document.getElementById('addressInput').value || reportData.address;
   const urgLabel = urgenza === 'Alta' ? '🔴 URGENTE — ' : urgenza === 'Bassa' ? '🟢 ' : '🟡 ';
@@ -428,12 +437,12 @@ async function sendReport() {
 
   const resolveUrl = siteBase + 'mappa.html?risolvi=' + token;
 
-  const destNome = _selectedDest ? _selectedDest.nome : '';
+  const destNome = _selectedDests.map(d => d.nome).join(', ');
   const testoMessaggio = [
     `📍 Segnalazione Civica — ${urgLabel}${cat}`,
     `📌 Luogo: ${addr}`,
     `📝 Descrizione: ${descr}`,
-    destNome ? `🏛️ Destinatario: ${destNome}` : '',
+    destNome ? `🏛️ Destinatari: ${destNome}` : '',
     `👤 Segnalato da: ${nome}`,
     `📧 Email: ${emailSegnalante}`,
     `🕐 ${now.toLocaleString('it-IT')}`,
@@ -471,9 +480,9 @@ async function sendReport() {
       Fonte_Posizione:    reportData.fontePosizione,
       Accuratezza_GPS_m:  String(reportData.accuratezza),
       Area_Destinataria:  destNome,
-      CC_Destinatari:     '',
+      CC_Destinatari:     toEmails.slice(1).join(', '),
       Destinatari:        destNome,
-      Canale_Email:       toEmail ? 'Sì' : 'No',
+      Canale_Email:       toEmails.length > 0 ? 'Sì' : 'No',
       Canale_WhatsApp:    'No',
       Canale_Twitter:     'No',
       Canale_Facebook:    'No',
@@ -481,7 +490,7 @@ async function sendReport() {
       Dimensioni_Immagine: reportData.photoDims,
       Testo_Messaggio:    testoMessaggio,
       URL_Segnalazione:   siteUrl,
-      Email_Destinatario: toEmail,
+      Email_Destinatario: toEmails[0] || '',
       Stato:              'Nuova',
       Token_Risoluzione:  token,
       ...(predictedImgUrl ? { URL_Immagine: predictedImgUrl } : {}),
@@ -498,9 +507,10 @@ async function sendReport() {
 
   // 2. Canali di invio
   const channelsBadges = [];
-  if (toEmail) {
-    const nomeBreve = destNome.length > 40 ? destNome.substring(0, 40) + '…' : destNome;
-    channelsBadges.push('🏛️ ' + (nomeBreve || toEmail));
+  if (toEmails.length > 0) {
+    _selectedDests.forEach(d => {
+      channelsBadges.push('🏛️ ' + d.nome);
+    });
   }
 
   // 3. Social sharing (se selezionato)
