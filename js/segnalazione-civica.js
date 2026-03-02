@@ -235,7 +235,7 @@ function getGPS() {
   const geoText = document.getElementById('geoText');
   if (geoText) geoText.textContent = 'Rilevamento GPS in corso…';
   if (!navigator.geolocation) {
-    if (geoText) geoText.textContent = 'GPS non disponibile — apri la mappa per posizionare';
+    if (geoText) geoText.textContent = 'GPS non disponibile — Clicca sulla mappa per posizionare il marker';
     return;
   }
   navigator.geolocation.getCurrentPosition(pos => {
@@ -243,7 +243,7 @@ function getGPS() {
     setPosition(lat, lng, 'GPS', Math.round(accuracy));
     if (geoText) geoText.textContent = `✓ Posizione GPS rilevata (±${Math.round(accuracy)} m)`;
   }, () => {
-    if (geoText) geoText.textContent = '⚠ GPS non disponibile — apri la mappa per posizionare';
+    if (geoText) geoText.textContent = '⚠ GPS non disponibile — Clicca sulla mappa per posizionare il marker';
   }, { enableHighAccuracy: true, timeout: 10000 });
 }
 
