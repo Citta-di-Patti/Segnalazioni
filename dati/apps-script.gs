@@ -140,52 +140,55 @@ function doPost(e) {
     const row = headers.map(col => data[col] !== undefined ? data[col] : '');
     sheet.appendRow(row);
 
-    const mittente = `SegnalaOra — Comune di ${NOME_COMUNE}`;
+    const mittente   = `SegnalaOra — Comune di ${NOME_COMUNE}`;
+    const siteBase   = (data.URL_Segnalazione || '').replace(/\/?$/, '/');
+    const resolveUrl = siteBase + 'mappa.html?risolvi=' + data.Token_Risoluzione;
 
-    // Email all'ufficio PA (solo se è stato fornito l'indirizzo del destinatario)
-    // noReply:true → Google usa un relay anonimo: il vero account Gmail non è visibile
-    // replyTo → quando la PA risponde, la risposta arriva direttamente al cittadino
-    if (data.Email_Destinatario && data.Testo_Messaggio) {
+    // Prepara allegato foto (base64 → Blob)
+    let photoBlob = null;
+    if (data.imageBase64) {
       try {
-        const subjectPA = `[SegnalaOra] ${data.Categoria_Emoji || ''}${data.Categoria} — ${data.ID_Segnalazione}`;
-        MailApp.sendEmail({
+        const b64 = data.imageBase64.replace(/^data:image\/\w+;base64,/, '');
+        photoBlob = Utilities.newBlob(
+          Utilities.base64Decode(b64),
+          'image/jpeg',
+          data.ID_Segnalazione + '.jpg'
+        );
+      } catch(e) {}
+    }
+
+    // Email all'ufficio PA
+    // noReply:true → Google usa un relay anonimo: il vero account Gmail non è visibile
+    // replyTo     → quando la PA risponde, arriva direttamente al cittadino
+    if (data.Email_Destinatario) {
+      try {
+        const urgPrefix  = data.Urgenza === 'Alta' ? '🔴 URGENTE — ' : '';
+        const subjectPA  = '[SegnalaOra] ' + urgPrefix + data.Categoria + ' — ' + data.ID_Segnalazione;
+        const optsPA = {
           to:       data.Email_Destinatario,
           subject:  subjectPA,
-          body:     data.Testo_Messaggio,
+          htmlBody: buildEmailPA(data, mittente, resolveUrl),
           name:     mittente,
           noReply:  true,
           replyTo:  data.Email_Segnalante || '',
-        });
+        };
+        if (photoBlob) optsPA.attachments = [photoBlob];
+        MailApp.sendEmail(optsPA);
       } catch(mailErr) {
         // Non bloccare l'invio se l'email alla PA fallisce
       }
     }
 
-    // Email di conferma al segnalante (solo se ha fornito l'email)
+    // Email di conferma al segnalante
     // noReply:true → il segnalante non vede l'account Google proprietario dello script
     if (data.Email_Segnalante) {
       try {
-        const subject = `[SegnalaOra] Segnalazione ricevuta — ${data.ID_Segnalazione}`;
-        const body = [
-          `Ciao ${data.Nome_Segnalante || 'Cittadino'},`,
-          ``,
-          `La tua segnalazione è stata registrata con successo nel sistema SegnalaOra.`,
-          ``,
-          `📋 ID segnalazione: ${data.ID_Segnalazione}`,
-          `📍 Categoria: ${data.Categoria_Emoji} ${data.Categoria}`,
-          `📌 Luogo: ${data.Indirizzo_Completo}`,
-          `🕐 Data/ora: ${data.Data} ${data.Ora}`,
-          ``,
-          `Conserva questo ID per seguire l'evoluzione della segnalazione.`,
-          ``,
-          `— ${mittente}`,
-        ].join('\n');
         MailApp.sendEmail({
-          to:      data.Email_Segnalante,
-          subject: subject,
-          body:    body,
-          name:    mittente,
-          noReply: true,
+          to:       data.Email_Segnalante,
+          subject:  '[SegnalaOra] Segnalazione ricevuta — ' + data.ID_Segnalazione,
+          htmlBody: buildEmailSegnalante(data, mittente),
+          name:     mittente,
+          noReply:  true,
         });
       } catch(mailErr) {
         // Non bloccare l'invio se l'email al segnalante fallisce
@@ -305,6 +308,95 @@ function uploadImageToGitHub(id, imageBase64) {
     return `https://${GITHUB_OWNER}.github.io/${GITHUB_REPO}/img/${id}.jpg`;
   }
   return null;
+}
+
+// ───────────────────────────────────────────────────────────────
+//  buildEmailPA — corpo HTML per l'ufficio PA
+// ───────────────────────────────────────────────────────────────
+function buildEmailPA(data, mittente, resolveUrl) {
+  const urgenza  = data.Urgenza || 'Normale';
+  const urgColor = urgenza === 'Alta' ? '#c0392b' : urgenza === 'Bassa' ? '#3d5a47' : '#d4820a';
+  const urgLabel = urgenza === 'Alta' ? '🔴 URGENTE' : urgenza === 'Bassa' ? '🟢 Bassa' : '🟡 Normale';
+
+  const tdL = 'padding:9px 14px;background:#f9f6f0;color:#5a5044;font-size:0.82rem;white-space:nowrap;vertical-align:top;border-bottom:1px solid #ede8e0;width:130px;';
+  const tdV = 'padding:9px 14px;font-size:0.88rem;border-bottom:1px solid #ede8e0;color:#1a1208;';
+
+  const rows = [
+    ['Categoria',    data.Categoria || '—'],
+    ['Urgenza',      '<span style="color:' + urgColor + ';font-weight:bold;">' + urgLabel + '</span>'],
+    ['Luogo',        data.Indirizzo_Completo || '—'],
+    ['Coordinate',   (data.Lat && data.Long) ? data.Lat + ', ' + data.Long : '—'],
+    ['Descrizione',  data.Descrizione || '—'],
+    ['Destinatario', data.Area_Destinataria || '—'],
+    ['Segnalato da', data.Nome_Segnalante || '—'],
+    ['Email',        data.Email_Segnalante ? '<a href="mailto:' + data.Email_Segnalante + '" style="color:#d4820a;">' + data.Email_Segnalante + '</a>' : '—'],
+    ['Data / ora',   (data.Data || '') + ' ' + (data.Ora || '')],
+    ['ID',           '<strong>' + (data.ID_Segnalazione || '—') + '</strong>'],
+  ].map(function(r) {
+    return '<tr><td style="' + tdL + '">' + r[0] + '</td><td style="' + tdV + '">' + r[1] + '</td></tr>';
+  }).join('');
+
+  const photoHtml = data.URL_Immagine
+    ? '<div style="margin:20px 0;"><a href="' + data.URL_Immagine + '"><img src="' + data.URL_Immagine + '" alt="Foto segnalazione" style="max-width:100%;border-radius:8px;border:1px solid #e8e0d4;"></a></div>'
+    : '';
+
+  return '<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f5f0e8;font-family:\'Segoe UI\',Arial,sans-serif;">'
+    + '<div style="max-width:620px;margin:24px auto;">'
+
+    // Header
+    + '<div style="background:#1a1208;padding:20px 28px;border-radius:10px 10px 0 0;">'
+    + '<h2 style="margin:0;color:#f5f0e8;font-size:1.1rem;">📍 Nuova Segnalazione Civica</h2>'
+    + '<p style="margin:5px 0 0;color:#d4820a;font-size:0.8rem;">' + mittente + '</p>'
+    + '</div>'
+
+    // Body
+    + '<div style="background:#fff;border:1px solid #e8e0d4;border-top:none;padding:24px 28px;border-radius:0 0 10px 10px;">'
+    + '<table style="width:100%;border-collapse:collapse;border:1px solid #ede8e0;border-radius:8px;overflow:hidden;">' + rows + '</table>'
+    + photoHtml
+
+    // Pulsante risolvi
+    + '<div style="margin-top:24px;padding:18px 20px;background:#f5f0e8;border-radius:8px;border:1px solid #e8e0d4;">'
+    + '<p style="margin:0 0 12px;font-size:0.83rem;color:#666;">Per segnare questa segnalazione come <strong>RISOLTA</strong>:</p>'
+    + '<a href="' + resolveUrl + '" style="display:inline-block;padding:10px 22px;background:#3d5a47;color:#fff;text-decoration:none;border-radius:8px;font-size:0.88rem;font-weight:600;">✓ Segna come risolta</a>'
+    + '</div>'
+
+    + '<p style="margin:18px 0 0;font-size:0.73rem;color:#aaa;">Messaggio generato automaticamente da ' + mittente + '.<br>Rispondendo a questa email contatti direttamente il cittadino segnalante.</p>'
+    + '</div></div></body></html>';
+}
+
+// ───────────────────────────────────────────────────────────────
+//  buildEmailSegnalante — corpo HTML di conferma per il cittadino
+// ───────────────────────────────────────────────────────────────
+function buildEmailSegnalante(data, mittente) {
+  const tdL = 'padding:8px 14px;background:#f9f6f0;color:#5a5044;font-size:0.82rem;white-space:nowrap;border-bottom:1px solid #ede8e0;width:110px;';
+  const tdV = 'padding:8px 14px;font-size:0.88rem;border-bottom:1px solid #ede8e0;color:#1a1208;';
+
+  const rows = [
+    ['ID',        '<strong>' + (data.ID_Segnalazione || '—') + '</strong>'],
+    ['Categoria', data.Categoria || '—'],
+    ['Luogo',     data.Indirizzo_Completo || '—'],
+    ['Data/ora',  (data.Data || '') + ' ' + (data.Ora || '')],
+  ].map(function(r) {
+    return '<tr><td style="' + tdL + '">' + r[0] + '</td><td style="' + tdV + '">' + r[1] + '</td></tr>';
+  }).join('');
+
+  return '<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f5f0e8;font-family:\'Segoe UI\',Arial,sans-serif;">'
+    + '<div style="max-width:560px;margin:24px auto;">'
+
+    // Header
+    + '<div style="background:#3d5a47;padding:20px 28px;border-radius:10px 10px 0 0;">'
+    + '<h2 style="margin:0;color:#fff;font-size:1.1rem;">✓ Segnalazione ricevuta</h2>'
+    + '<p style="margin:5px 0 0;color:#a8d5b5;font-size:0.8rem;">' + mittente + '</p>'
+    + '</div>'
+
+    // Body
+    + '<div style="background:#fff;border:1px solid #e8e0d4;border-top:none;padding:24px 28px;border-radius:0 0 10px 10px;">'
+    + '<p style="margin:0 0 16px;font-size:0.95rem;">Ciao <strong>' + (data.Nome_Segnalante || 'Cittadino') + '</strong>,</p>'
+    + '<p style="margin:0 0 16px;color:#555;font-size:0.88rem;">La tua segnalazione è stata registrata con successo nel sistema SegnalaOra.</p>'
+    + '<table style="width:100%;border-collapse:collapse;border:1px solid #ede8e0;border-radius:8px;overflow:hidden;margin-bottom:20px;">' + rows + '</table>'
+    + '<p style="margin:0;font-size:0.83rem;color:#555;">Conserva il tuo <strong>ID segnalazione</strong> per seguire l\'evoluzione della pratica.</p>'
+    + '<p style="margin:20px 0 0;font-size:0.73rem;color:#aaa;">— ' + mittente + '</p>'
+    + '</div></div></body></html>';
 }
 
 // ───────────────────────────────────────────────────────────────
