@@ -45,7 +45,7 @@ header {
   gap: 1rem;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 10000;
   box-shadow: 0 2px 12px rgba(26,18,8,0.08);
 }
 
