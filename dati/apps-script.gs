@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ID del tuo Google Sheet (dalla URL: /spreadsheets/d/ID/edit)
-const SHEET_ID = '1Wy86M342so7EHLi3F-G5UNvXFq058Zr5EKAPhjNS3FM';
+const SHEET_ID = '1Wun8u5LG04R_4GuT8XOG5l_QT3NulmULCztNUI4n-E0';
 
 // Nome del foglio (tab in basso nel foglio)
 const SHEET_NAME = 'Main';

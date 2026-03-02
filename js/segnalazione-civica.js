@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────
 const CONFIG = {
   // URL del Google Apps Script distribuito come Web App
-  appsScriptUrl: 'https://script.google.com/macros/s/AKfycbwiLYj4k102Vamc5PuqYp6euSVnYJh61RtkgTGvXufbLV3R_r-j2MRCdlavPu2nCFvpmw/exec',
+  appsScriptUrl: 'https://script.google.com/macros/s/AKfycbwve06JZu-6pGn0KQXMlZR6OCelS_3SWlxjAtK9CTM1De-26D-YXFUVAdQfR8w8OUts/exec',
 
   // URL pubblico dell'app (lascia vuoto per auto-rilevamento)
   siteUrl: '',
