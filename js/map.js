@@ -40,7 +40,7 @@ function initMap() {
   new L.Hash(map);
 
   const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> By <a href="https://opendatasicilia.it/">@opendatasicilia</a> ',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> By <a href="https://opendatasicilia.it/" title="@opendatasicilia" target="_blank">@opendatasicilia</a>',
     maxZoom: 19
   });
 
