@@ -6,8 +6,9 @@
 // ─────────────────────────────────────────────────────────
 //  CONFIGURAZIONE
 // ─────────────────────────────────────────────────────────
-const SHEETS_CSV_APERTE  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzGnyHVzcSbnLKsp1gkFi5a8xJeeFTK8YhmA67XJUEGaJIQ5sMNwqG4Jdhxg9DqaAWU2bdWGHGfnpR/pub?gid=144049557&single=true&output=csv';
-const SHEETS_CSV_RISOLTE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzGnyHVzcSbnLKsp1gkFi5a8xJeeFTK8YhmA67XJUEGaJIQ5sMNwqG4Jdhxg9DqaAWU2bdWGHGfnpR/pub?gid=707341479&single=true&output=csv';
+// CSV locali — generati da GitHub Actions ogni 30 min, già privi di dati personali
+const SHEETS_CSV_APERTE  = 'dati/segnalazioni.csv';
+const SHEETS_CSV_RISOLTE = 'dati/risolte.csv';
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwiLYj4k102Vamc5PuqYp6euSVnYJh61RtkgTGvXufbLV3R_r-j2MRCdlavPu2nCFvpmw/exec';
 
@@ -120,7 +121,8 @@ async function loadData() {
   const timeoutId  = setTimeout(() => controller.abort(), 12000);
 
   try {
-    const res  = await fetch(url + '&t=' + Date.now(), { signal: controller.signal });
+    const cacheBust = url.startsWith('http') ? '&t=' : '?t=';
+    const res  = await fetch(url + cacheBust + Date.now(), { signal: controller.signal });
     const text = await res.text();
     clearTimeout(timeoutId);
     allReports = parseCSV(text);
@@ -225,7 +227,7 @@ function showDemoData() {
 
   const notice = document.createElement('div');
   notice.style.cssText = 'position:absolute;top:1rem;left:50%;transform:translateX(-50%);background:#fff8e1;border:1.5px solid #ffd54f;border-radius:8px;padding:0.6rem 1rem;font-size:0.75rem;z-index:300;color:#5a4000;white-space:nowrap;';
-  notice.textContent = '⚠ Dati demo — configura SHEETS_CSV_APERTE/RISOLTE per dati reali';
+  notice.textContent = '⚠ Dati demo — assicurati che dati/segnalazioni.csv esista nel repository';
   document.querySelector('.app-body').appendChild(notice);
 
   renderAll();

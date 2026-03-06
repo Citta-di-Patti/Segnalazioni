@@ -2,8 +2,9 @@
    SegnalaOra — Statistiche
    ═══════════════════════════════════════════════════════ */
 
-const SHEETS_CSV_APERTE  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzGnyHVzcSbnLKsp1gkFi5a8xJeeFTK8YhmA67XJUEGaJIQ5sMNwqG4Jdhxg9DqaAWU2bdWGHGfnpR/pub?gid=144049557&single=true&output=csv';
-const SHEETS_CSV_RISOLTE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzGnyHVzcSbnLKsp1gkFi5a8xJeeFTK8YhmA67XJUEGaJIQ5sMNwqG4Jdhxg9DqaAWU2bdWGHGfnpR/pub?gid=707341479&single=true&output=csv';
+// CSV locali — generati da GitHub Actions ogni 30 min, già privi di dati personali
+const SHEETS_CSV_APERTE  = 'dati/segnalazioni.csv';
+const SHEETS_CSV_RISOLTE = 'dati/risolte.csv';
 
 // ─────────────────────────────────────────────
 //  CSV PARSING (condiviso con map.js)
@@ -89,9 +90,10 @@ const ALL_CATEGORIES = [
 async function loadAll() {
   try {
     const t = Date.now();
+    const bust = url => url.startsWith('http') ? url + '&t=' + t : url + '?t=' + t;
     const [r1, r2] = await Promise.all([
-      fetch(SHEETS_CSV_APERTE  + '&t=' + t),
-      fetch(SHEETS_CSV_RISOLTE + '&t=' + t)
+      fetch(bust(SHEETS_CSV_APERTE)),
+      fetch(bust(SHEETS_CSV_RISOLTE))
     ]);
     const [t1, t2] = await Promise.all([r1.text(), r2.text()]);
     renderStats(parseCSV(t1), parseCSV(t2));
