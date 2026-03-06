@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(gh issue view 2)"
+      "Bash(gh issue view 2)",
+      "Bash(gh issue comment 2 --body \"Ciao @gbell27, grazie per la segnalazione dettagliata e per aver indicato l''impatto GDPR.:*)"
     ]
   }
 }
