@@ -694,7 +694,7 @@ body.page-form .cat-expand-btn:hover { border-color: var(--amber); color: var(--
 body.page-form .send-btn {
   width: 100%;
   padding: 1.1rem;
-  background: var(--paper);
+  background: #ffffff;
   color: var(--ink);
   border: 1.5px solid rgba(60,40,20,0.1);
   border-radius: 14px;
