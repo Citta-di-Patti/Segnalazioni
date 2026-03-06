@@ -524,21 +524,26 @@ async function sendReport() {
     _selectedDests.forEach(d => { channelsBadges.push('🏛️ ' + d.nome); });
   }
   if (_socialPlatforms.size > 0) {
-    const socialMsg = [
+    // Testo base senza URL (per piattaforme che hanno già il link come param separato)
+    const socialBase = [
       `${urgLabel}${cat}`,
       `📍 ${addr}`,
       descr ? `📝 ${descr.length > 120 ? descr.slice(0, 117) + '…' : descr}` : '',
       `#SegnalaOra #${cat.replace(/[^a-zA-Z0-9]/g, '')}`,
-      siteBase + 'mappa.html',
     ].filter(Boolean).join('\n');
-    const mapUrl = encodeURIComponent(siteBase + 'mappa.html');
-    const txt    = encodeURIComponent(socialMsg);
+
+    const mapPageUrl = siteBase + 'mappa.html';
+    const mapUrl     = encodeURIComponent(mapPageUrl);
+    // Per Twitter/WhatsApp/Bluesky (solo testo) aggiungiamo il link in coda
+    const txtWithUrl = encodeURIComponent(socialBase + '\n👉 ' + mapPageUrl);
+    // Per Telegram/Facebook passiamo il link come param separato, non nel testo
+    const txtNoUrl   = encodeURIComponent(socialBase);
     const urls = {
-      twitter:  `https://twitter.com/intent/tweet?text=${txt}`,
-      whatsapp: `https://wa.me/?text=${txt}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${mapUrl}&quote=${txt}`,
-      telegram: `https://t.me/share/url?url=${mapUrl}&text=${txt}`,
-      bluesky:  `https://bsky.app/intent/compose?text=${txt}`,
+      twitter:  `https://twitter.com/intent/tweet?text=${txtWithUrl}`,
+      whatsapp: `https://wa.me/?text=${txtWithUrl}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${mapUrl}&quote=${txtNoUrl}`,
+      telegram: `https://t.me/share/url?url=${mapUrl}&text=${txtNoUrl}`,
+      bluesky:  `https://bsky.app/intent/compose?text=${txtWithUrl}`,
     };
     const names = { twitter: 'X/Twitter', whatsapp: 'WhatsApp', facebook: 'Facebook', telegram: 'Telegram', bluesky: 'Bluesky' };
     for (const p of _socialPlatforms) {
