@@ -1,10 +1,13 @@
 name: Sincronizza Google Sheets
 
 # ─────────────────────────────────────────────────────────────
-#  Scarica i due CSV pubblicati da Google Sheets (fogli query
-#  del foglio Main) e li salva in dati/:
-#    dati/segnalazioni.csv  ← foglio 'Segnalazioni' (aperte)
-#    dati/risolte.csv       ← foglio 'Risolta'
+#  Scarica i tre CSV pubblicati da Google Sheets e li salva in dati/:
+#    dati/segnalazioni.csv  ← foglio 'Aperte'
+#    dati/risolte.csv       ← foglio 'Risolte'
+#    dati/main.csv          ← foglio principale (tutti i dati)
+#
+#  Se un file risulta aggiornato, il precedente viene salvato
+#  come backup in dati/backup/ con timestamp UTC nel nome.
 # ─────────────────────────────────────────────────────────────
 
 on:
@@ -18,6 +21,7 @@ permissions:
 env:
   CSV_APERTE:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRzGnyHVzcSbnLKsp1gkFi5a8xJeeFTK8YhmA67XJUEGaJIQ5sMNwqG4Jdhxg9DqaAWU2bdWGHGfnpR/pub?gid=144049557&single=true&output=csv"
   CSV_RISOLTE: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRzGnyHVzcSbnLKsp1gkFi5a8xJeeFTK8YhmA67XJUEGaJIQ5sMNwqG4Jdhxg9DqaAWU2bdWGHGfnpR/pub?gid=707341479&single=true&output=csv"
+  CSV_MAIN:    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSsv5emsudeZOCiaREWWRFP14r5ZSmMW-WzwBTNv-aUitRaEb8mOy5dbm4KmBjpSwSSn2A-GAL7UGYz/pub?output=csv"
 
 jobs:
   sync:
@@ -30,13 +34,66 @@ jobs:
 
       - name: Scarica CSV da Google Sheets
         run: |
+          mkdir -p tmp_csv dati/backup
+
           echo "Scaricando segnalazioni aperte..."
-          curl -L "$CSV_APERTE"  --output dati/segnalazioni.csv --fail --silent --show-error
-          echo "Aperte: $(wc -l < dati/segnalazioni.csv) righe"
+          curl -L "$CSV_APERTE"  --output tmp_csv/segnalazioni.csv --fail --silent --show-error
+          echo "  → $(wc -l < tmp_csv/segnalazioni.csv) righe"
 
           echo "Scaricando segnalazioni risolte..."
-          curl -L "$CSV_RISOLTE" --output dati/risolte.csv     --fail --silent --show-error
-          echo "Risolte: $(wc -l < dati/risolte.csv) righe"
+          curl -L "$CSV_RISOLTE" --output tmp_csv/risolte.csv     --fail --silent --show-error
+          echo "  → $(wc -l < tmp_csv/risolte.csv) righe"
+
+          echo "Scaricando CSV principale..."
+          curl -L "$CSV_MAIN"    --output tmp_csv/main.csv         --fail --silent --show-error
+          echo "  → $(wc -l < tmp_csv/main.csv) righe"
+
+      - name: Backup e sostituzione file aggiornati
+        run: |
+          python3 << 'PYEOF'
+          import os, shutil, hashlib
+          from datetime import datetime
+
+          BACKUP_DIR = "dati/backup"
+          os.makedirs(BACKUP_DIR, exist_ok=True)
+
+          # Timestamp UTC per il nome del backup
+          timestamp = datetime.utcnow().strftime("%Y-%m-%d_%H-%M")
+
+          FILES = [
+              ("tmp_csv/segnalazioni.csv", "dati/segnalazioni.csv"),
+              ("tmp_csv/risolte.csv",      "dati/risolte.csv"),
+              ("tmp_csv/main.csv",         "dati/main.csv"),
+          ]
+
+          def md5(path):
+              with open(path, 'rb') as f:
+                  return hashlib.md5(f.read()).hexdigest()
+
+          for tmp_path, dest_path in FILES:
+              stem = os.path.basename(dest_path).replace('.csv', '')
+
+              if not os.path.exists(tmp_path):
+                  print(f"⚠️  {tmp_path} non trovato, skip.")
+                  continue
+
+              if not os.path.exists(dest_path):
+                  # Prima esecuzione: crea il file senza backup
+                  shutil.copy2(tmp_path, dest_path)
+                  print(f"✓ {dest_path}: creato ({os.path.getsize(dest_path):,} bytes)")
+              elif md5(dest_path) == md5(tmp_path):
+                  print(f"─ {dest_path}: nessuna modifica.")
+              else:
+                  # File cambiato → salva backup del precedente, poi sostituisci
+                  backup_name = f"{timestamp}_{stem}.csv"
+                  backup_path = os.path.join(BACKUP_DIR, backup_name)
+                  shutil.copy2(dest_path, backup_path)
+                  shutil.copy2(tmp_path,  dest_path)
+                  old_kb = os.path.getsize(backup_path) // 1024
+                  new_kb = os.path.getsize(dest_path)   // 1024
+                  print(f"✓ {dest_path}: aggiornato ({old_kb}KB → {new_kb}KB)")
+                  print(f"  └─ backup: {backup_path}")
+          PYEOF
 
       - name: Rimuovi colonna Token_Risoluzione dai CSV pubblici
         run: |
@@ -49,10 +106,10 @@ jobs:
                   return
               with open(path, newline='', encoding='utf-8') as f:
                   reader = csv.DictReader(f)
-                  rows = list(reader)
+                  rows       = list(reader)
                   fieldnames = list(reader.fieldnames or [])
               if 'Token_Risoluzione' not in fieldnames:
-                  print(f"{path}: Token_Risoluzione non presente — nessuna modifica.")
+                  print(f"{path}: Token_Risoluzione assente — nessuna modifica.")
                   return
               public_fields = [c for c in fieldnames if c != 'Token_Risoluzione']
               with open(path, 'w', newline='', encoding='utf-8') as f:
@@ -63,6 +120,7 @@ jobs:
 
           strip_token("dati/segnalazioni.csv")
           strip_token("dati/risolte.csv")
+          strip_token("dati/main.csv")
           PYEOF
 
       - name: Commit e push se ci sono modifiche
@@ -70,14 +128,15 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add dati/segnalazioni.csv dati/risolte.csv
+          git add dati/segnalazioni.csv dati/risolte.csv dati/main.csv dati/backup/
 
           if git diff --cached --quiet; then
             echo "Nessuna modifica — skip commit."
           else
             APERTE=$(tail -n +2 dati/segnalazioni.csv | grep -c . 2>/dev/null || echo "?")
             RISOLTE=$(tail -n +2 dati/risolte.csv     | grep -c . 2>/dev/null || echo "?")
-            git commit -m "sync: ${APERTE} aperte, ${RISOLTE} risolte [skip ci]"
+            MAIN=$(tail -n +2    dati/main.csv         | grep -c . 2>/dev/null || echo "?")
+            git commit -m "sync: ${APERTE} aperte · ${RISOLTE} risolte · ${MAIN} main [skip ci]"
             git push
-            echo "Commit: ${APERTE} aperte, ${RISOLTE} risolte."
+            echo "Push: ${APERTE} aperte, ${RISOLTE} risolte, ${MAIN} main."
           fi
