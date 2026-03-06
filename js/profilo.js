@@ -128,8 +128,12 @@ async function syncFromEmail(email, showFeedback) {
       fetch(SHEETS_CSV_APERTE  + '&t=' + Date.now()).then(r => r.text()).catch(() => ''),
       fetch(SHEETS_CSV_RISOLTE + '&t=' + Date.now()).then(r => r.text()).catch(() => ''),
     ]);
-    const rows = [...parseCSV(t1), ...parseCSV(t2)]
-      .filter(r => (r.Email_Segnalante || '').trim().toLowerCase() === email.toLowerCase());
+    const allRows = [...parseCSV(t1), ...parseCSV(t2)];
+    console.log('[Profilo] CSV header keys:', allRows.length > 0 ? Object.keys(allRows[0]) : '(nessuna riga)');
+    console.log('[Profilo] Totale righe parsed:', allRows.length, '| Cerca email:', email);
+    if (allRows.length > 0) console.log('[Profilo] Prima riga Email_Segnalante:', JSON.stringify(allRows[0].Email_Segnalante));
+    const rows = allRows.filter(r => (r.Email_Segnalante || '').trim().toLowerCase() === email.toLowerCase());
+    console.log('[Profilo] Righe trovate per questa email:', rows.length);
 
     const converted = rows.map(r => ({
       ticketId:  r.ID_Segnalazione,
@@ -358,7 +362,7 @@ function parseCSV(text) {
     headers.forEach((h, idx) => {
       obj[h.trim().replace(/^\uFEFF/, '')] = (vals[idx] !== undefined ? vals[idx] : '').trim();
     });
-    if (obj.ID_Segnalazione) result.push(obj);
+    result.push(obj);
   }
   return result;
 }
