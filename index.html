@@ -116,7 +116,7 @@
       <input type="email" id="customEmail" placeholder="ufficio@comune.it" oninput="onCustomEmailInput()">
       <div class="field-error" id="customEmail-error">Inserisci un indirizzo email valido.</div>
     </div>
-    <div class="field-error" id="dest-error">⚠️ Seleziona a chi inviare la segnalazione.</div>
+    <div class="field-error" id="dest-error">⚠️ Seleziona un destinatario PA oppure almeno un canale social.</div>
   </section>
 
   <!-- ④ DETTAGLI -->
@@ -173,11 +173,7 @@
         <i class="fa-brands fa-bluesky"></i>
       </button>
     </div>
-    <div class="social-tags-row" id="socialTagsRow" style="display:none">
-      <label>Tagga profili (opzionale)</label>
-      <input type="text" id="socialTags" placeholder="@sindaco, @giornale, @associazione">
-      <p class="field-hint">Profili separati da virgola — verranno inclusi nel post</p>
-    </div>
+    <p class="field-hint" id="socialHint" style="display:none"><i class="fa-solid fa-circle-info"></i> Il post verrà generato automaticamente con categoria, luogo e descrizione.</p>
   </section>
 
   <!-- ⑦ INVIA -->

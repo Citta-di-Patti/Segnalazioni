@@ -418,9 +418,9 @@ async function sendReport() {
     hasError = true;
   }
 
-  if (_selectedDests.length === 0) {
+  if (_selectedDests.length === 0 && _socialPlatforms.size === 0) {
     document.getElementById('dest-error').classList.add('visible');
-    if (!hasError) document.querySelector('.form-section:has(#destGrid)') && document.querySelector('.form-section:has(#destGrid)').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!hasError) document.querySelector('.form-section:has(#destGrid)')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     hasError = true;
   }
 
@@ -517,7 +517,37 @@ async function sendReport() {
     `──────────────────────────────────────`
   ].filter(Boolean).join('\n');
 
-  // 1. POST JSON ad Apps Script
+  // 2. Social sharing — aperto QUI, prima di qualsiasi await,
+  //    per mantenere il contesto del gesto utente ed evitare il blocco popup
+  const channelsBadges = [];
+  if (toEmails.length > 0) {
+    _selectedDests.forEach(d => { channelsBadges.push('🏛️ ' + d.nome); });
+  }
+  if (_socialPlatforms.size > 0) {
+    const socialMsg = [
+      `${urgLabel}${cat}`,
+      `📍 ${addr}`,
+      descr ? `📝 ${descr.length > 120 ? descr.slice(0, 117) + '…' : descr}` : '',
+      `#SegnalaOra #${cat.replace(/[^a-zA-Z0-9]/g, '')}`,
+      siteBase + 'mappa.html',
+    ].filter(Boolean).join('\n');
+    const mapUrl = encodeURIComponent(siteBase + 'mappa.html');
+    const txt    = encodeURIComponent(socialMsg);
+    const urls = {
+      twitter:  `https://twitter.com/intent/tweet?text=${txt}`,
+      whatsapp: `https://wa.me/?text=${txt}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${mapUrl}&quote=${txt}`,
+      telegram: `https://t.me/share/url?url=${mapUrl}&text=${txt}`,
+      bluesky:  `https://bsky.app/intent/compose?text=${txt}`,
+    };
+    const names = { twitter: 'X/Twitter', whatsapp: 'WhatsApp', facebook: 'Facebook', telegram: 'Telegram', bluesky: 'Bluesky' };
+    for (const p of _socialPlatforms) {
+      window.open(urls[p], '_blank');
+      channelsBadges.push('📱 ' + names[p]);
+    }
+  }
+
+  // 1. POST JSON ad Apps Script (async — dopo l'apertura sincrona delle finestre social)
   if (CONFIG.appsScriptUrl) {
     const payload = {
       ID_Segnalazione:    ticketId,
@@ -579,45 +609,7 @@ async function sendReport() {
     } catch(e) {}
   }
 
-  // 2. Canali di invio
-  const channelsBadges = [];
-  if (toEmails.length > 0) {
-    _selectedDests.forEach(d => {
-      channelsBadges.push('🏛️ ' + d.nome);
-    });
-  }
-
-  // 3. Social sharing (se selezionato)
-  if (_socialPlatforms.size > 0) {
-    const rawTags = (document.getElementById('socialTags')?.value || '').trim();
-    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean)
-      .map(t => t.startsWith('@') ? t : '@' + t).join(' ');
-    const socialMsg = [
-      `${urgLabel}${cat} — ${addr}`,
-      descr ? `📝 ${descr}` : '',
-      tags,
-      `#SegnalaOra #${cat.replace(/[^a-zA-Z0-9]/g, '')}`,
-      siteBase + 'mappa.html',
-    ].filter(Boolean).join('\n');
-    const mapUrl = encodeURIComponent(siteBase + 'mappa.html');
-    const txt    = encodeURIComponent(socialMsg);
-    const urls = {
-      twitter:  `https://twitter.com/intent/tweet?text=${txt}`,
-      whatsapp: `https://wa.me/?text=${txt}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${mapUrl}&quote=${txt}`,
-      telegram: `https://t.me/share/url?url=${mapUrl}&text=${txt}`,
-      bluesky:  `https://bsky.app/intent/compose?text=${txt}`,
-    };
-    const names = { twitter: 'X/Twitter', whatsapp: 'WhatsApp', facebook: 'Facebook', telegram: 'Telegram', bluesky: 'Bluesky' };
-    let delay = 200;
-    for (const p of _socialPlatforms) {
-      setTimeout(() => window.open(urls[p], '_blank'), delay);
-      channelsBadges.push('📱 ' + names[p]);
-      delay += 600;
-    }
-  }
-
-  // 4. Schermata di successo
+  // 3. Schermata di successo
   _ticketCopied = false;
   document.getElementById('ticketId').textContent     = ticketId;
   document.getElementById('resolveToken').textContent = token;
@@ -677,8 +669,8 @@ function toggleSocial(platform) {
   document.querySelectorAll('.social-chip').forEach(btn =>
     btn.classList.toggle('active', _socialPlatforms.has(btn.dataset.platform))
   );
-  const row = document.getElementById('socialTagsRow');
-  if (row) row.style.display = _socialPlatforms.size > 0 ? 'block' : 'none';
+  const hint = document.getElementById('socialHint');
+  if (hint) hint.style.display = _socialPlatforms.size > 0 ? 'block' : 'none';
 }
 
 // ─────────────────────────────────────────────
