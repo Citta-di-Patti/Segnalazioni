@@ -1,8 +1,4 @@
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 9a31f6f7355e821be65f06102a9200b43c86a2f1
 [![GitHub stars](https://img.shields.io/github/stars/gbvitrano/Segnalazioni?style=flat&logo=github&label=stars)](https://github.com/gbvitrano/Segnalazioni/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/gbvitrano/Segnalazioni?style=flat&logo=github&label=forks)](https://github.com/gbvitrano/Segnalazioni/forks)
 [![GitHub last commit](https://img.shields.io/github/last-commit/gbvitrano/Segnalazioni?style=flat&label=ultimo%20aggiornamento)](https://github.com/gbvitrano/Segnalazioni/commits/master)
@@ -15,10 +11,7 @@
 [![Chart.js](https://img.shields.io/badge/Chart.js-4.4-pink?style=flat&logo=chart.js)](https://www.chartjs.org/)
 
 ---
-<<<<<<< HEAD
 
-=======
->>>>>>> 9a31f6f7355e821be65f06102a9200b43c86a2f1
 # SegnalaOra — Segnalazioni Civiche
 
 Strumento open source per segnalare problemi del territorio al proprio Comune: buche stradali, rifiuti abbandonati, illuminazione pubblica guasta, verde incurato e molto altro.
