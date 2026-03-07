@@ -9,6 +9,10 @@ const APPS_SCRIPT_URL    = APP_CONFIG.appsScriptUrl;
 const LS_KEY       = 'segnalaora_profilo';
 const LS_EMAIL_KEY = 'segnalaora_email';
 
+// Stato filtri profilo
+let profiloAllReports = [];
+let profiloFilters    = { categoria: 'all', periodo: 'all' };
+
 // ─────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────
@@ -174,12 +178,85 @@ async function syncFromEmail(email, showFeedback) {
 }
 
 // ─────────────────────────────────────────────
+//  FILTRI PROFILO
+// ─────────────────────────────────────────────
+function parseItalianDate(str) {
+  if (!str) return null;
+  const parts = str.split('/');
+  if (parts.length !== 3) return null;
+  return new Date(+parts[2], +parts[1] - 1, +parts[0]);
+}
+
+function populateCategoryOptions(reports) {
+  const sel = document.getElementById('pfCategoria');
+  if (!sel) return;
+  const cats = [...new Set(reports.map(r => r.categoria).filter(Boolean))].sort();
+  // Mantieni l'opzione "Tutte" e aggiungi le categorie uniche
+  sel.innerHTML = '<option value="all">Tutte le categorie</option>'
+    + cats.map(c => `<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join('');
+  sel.value = profiloFilters.categoria;
+}
+
+function applyProfiloFilters() {
+  profiloFilters.categoria = document.getElementById('pfCategoria')?.value || 'all';
+  profiloFilters.periodo   = document.getElementById('pfPeriodo')?.value   || 'all';
+
+  let filtered = profiloAllReports;
+
+  if (profiloFilters.categoria !== 'all') {
+    filtered = filtered.filter(r => r.categoria === profiloFilters.categoria);
+  }
+
+  if (profiloFilters.periodo !== 'all') {
+    const days   = parseInt(profiloFilters.periodo);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    filtered = filtered.filter(r => {
+      const d = parseItalianDate(r.data);
+      return d ? d >= cutoff : true;
+    });
+  }
+
+  const list = document.getElementById('profileList');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="no-reports"><i class="fa-solid fa-filter"></i> Nessuna segnalazione con i filtri selezionati.</div>';
+  } else {
+    list.innerHTML = filtered.map((r, i) => renderCard(r, i)).join('');
+  }
+}
+
+// ─────────────────────────────────────────────
 //  RENDER LISTA
 // ─────────────────────────────────────────────
 function renderList(reports, header) {
+  // Salva sempre la lista completa per i filtri
+  profiloAllReports = reports || [];
+
+  // Mostra/nasconde la barra filtri
+  const filterBar = document.getElementById('profiloFilters');
+  if (filterBar) filterBar.style.display = reports && reports.length > 1 ? 'flex' : 'none';
+
+  // Popola le opzioni categoria
+  populateCategoryOptions(profiloAllReports);
+
+  // Applica filtri correnti
+  let filtered = profiloAllReports;
+  if (profiloFilters.categoria !== 'all') {
+    filtered = filtered.filter(r => r.categoria === profiloFilters.categoria);
+  }
+  if (profiloFilters.periodo !== 'all') {
+    const days   = parseInt(profiloFilters.periodo);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    filtered = filtered.filter(r => {
+      const d = parseItalianDate(r.data);
+      return d ? d >= cutoff : true;
+    });
+  }
+
   const list = document.getElementById('profileList');
   list.innerHTML = (header ? `<div class="search-results-header">${header}</div>` : '')
-    + reports.map((r, i) => renderCard(r, i)).join('');
+    + filtered.map((r, i) => renderCard(r, i)).join('');
 }
 
 function renderCard(r, idx) {

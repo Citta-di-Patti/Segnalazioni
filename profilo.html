@@ -55,6 +55,19 @@
     </div>
   </div>
 
+  <!-- Filtri rapidi (visibili solo quando ci sono segnalazioni) -->
+  <div class="profilo-filters" id="profiloFilters" style="display:none">
+    <select id="pfCategoria" class="app-select" onchange="applyProfiloFilters()">
+      <option value="all">Tutte le categorie</option>
+    </select>
+    <select id="pfPeriodo" class="app-select" onchange="applyProfiloFilters()">
+      <option value="all">Tutti i periodi</option>
+      <option value="7">Ultimi 7 giorni</option>
+      <option value="30">Ultimi 30 giorni</option>
+      <option value="90">Ultimi 90 giorni</option>
+    </select>
+  </div>
+
   <!-- Lista segnalazioni -->
   <div class="profile-list" id="profileList">
     <div class="no-results-loading">

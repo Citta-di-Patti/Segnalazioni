@@ -24,7 +24,7 @@ let filteredReports = [];
 let markers         = [];
 let markerById      = {};   // ID_Segnalazione → Leaflet marker
 let map;
-let activeFilters = { urgenza: 'all', stato: 'all' };
+let activeFilters = { urgenza: 'all', stato: 'all', categoria: 'all', periodo: 'all' };
 let highlightedId = null;
 let viewMode      = 'aperte';   // 'aperte' | 'risolte'
 let _focusTimer   = null;       // timer per apertura popup da focusReport
@@ -152,6 +152,7 @@ async function loadData() {
     const text = await res.text();
     clearTimeout(timeoutId);
     allReports = parseCSV(text);
+    renderCategoryChips();
     renderAll();
     document.getElementById('loadingOverlay').style.display = 'none';
   } catch(e) {
@@ -250,6 +251,7 @@ function showDemoData() {
   ];
 
   document.getElementById('loadingOverlay').style.display = 'none';
+  renderCategoryChips();
 
   const notice = document.createElement('div');
   notice.style.cssText = 'position:absolute;top:1rem;left:50%;transform:translateX(-50%);background:#fff8e1;border:1.5px solid #ffd54f;border-radius:8px;padding:0.6rem 1rem;font-size:0.75rem;z-index:300;color:#5a4000;white-space:nowrap;';
@@ -282,16 +284,29 @@ function setFilter(type, val, el) {
 }
 
 function resetFilters() {
-  activeFilters = { urgenza: 'all', stato: 'all' };
+  activeFilters = { urgenza: 'all', stato: 'all', categoria: 'all', periodo: 'all' };
   document.querySelectorAll('.chip').forEach(c => {
     if (c.dataset.val === 'all') c.classList.add('active');
     else c.classList.remove('active');
   });
+  const catSel    = document.getElementById('catFilter');
+  const periodoSel = document.getElementById('periodoFilter');
+  if (catSel)    catSel.value    = 'all';
+  if (periodoSel) periodoSel.value = 'all';
+  renderAll();
+}
+
+function setPeriodo(val) {
+  activeFilters.periodo = val;
   renderAll();
 }
 
 function setViewMode(mode) {
   viewMode = mode;
+  // Reset filtri stato/urgenza (specifici per modalità)
+  activeFilters.urgenza   = 'all';
+  activeFilters.stato     = 'all';
+  activeFilters.categoria = 'all';
   document.getElementById('tabAperte').classList.toggle('active', mode === 'aperte');
   document.getElementById('tabRisolte').classList.toggle('active', mode === 'risolte');
   document.getElementById('tabRisolte').classList.toggle('active-resolved', mode === 'risolte');
@@ -301,14 +316,85 @@ function setViewMode(mode) {
   loadData();
 }
 
+function parseItalianDate(str) {
+  if (!str) return null;
+  const parts = str.split('/');
+  if (parts.length !== 3) return null;
+  return new Date(+parts[2], +parts[1] - 1, +parts[0]);
+}
+
+function isInPeriod(dateStr, periodo) {
+  if (periodo === 'all') return true;
+  const d = parseItalianDate(dateStr);
+  if (!d) return true;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - parseInt(periodo));
+  return d >= cutoff;
+}
+
 function applyFilters() {
   return allReports.filter(r => {
     if (viewMode === 'aperte') {
       if (activeFilters.urgenza !== 'all' && r.Urgenza !== activeFilters.urgenza) return false;
       if (activeFilters.stato   !== 'all' && r.Stato   !== activeFilters.stato)   return false;
     }
+    if (activeFilters.categoria !== 'all' && r.Categoria !== activeFilters.categoria) return false;
+    if (!isInPeriod(r.Data, activeFilters.periodo)) return false;
     return true;
   });
+}
+
+function renderCategoryChips() {
+  const sel = document.getElementById('catFilter');
+  if (!sel) return;
+
+  // Raccoglie categorie uniche presenti nei dati caricati
+  const cats = [...new Set(allReports.map(r => r.Categoria).filter(Boolean))].sort();
+  const current = activeFilters.categoria;
+
+  sel.innerHTML = `<option value="all">Tutte le categorie</option>`
+    + cats.map(c => `<option value="${c.replace(/"/g,'&quot;')}"${c === current ? ' selected' : ''}>${c}</option>`).join('');
+}
+
+function setCatFilter(val) {
+  activeFilters.categoria = val;
+  renderAll();
+}
+
+// ─────────────────────────────────────────────────────────
+//  RICERCA INDIRIZZO (Nominatim)
+// ─────────────────────────────────────────────────────────
+async function searchAddress() {
+  const input = document.getElementById('addrInput');
+  const query = (input ? input.value : '').trim();
+  if (!query) { if (input) input.focus(); return; }
+
+  const btn = document.querySelector('.addr-search-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+
+  try {
+    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query);
+    const res  = await fetch(url, { headers: { 'Accept-Language': 'it' } });
+    const data = await res.json();
+
+    if (data && data.length > 0) {
+      const { lat, lon, display_name } = data[0];
+      map.setView([parseFloat(lat), parseFloat(lon)], 16, { animate: true });
+      // Marker temporaneo
+      const pin = L.marker([parseFloat(lat), parseFloat(lon)], {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="width:14px;height:14px;background:var(--amber);border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>',
+          iconSize: [14,14], iconAnchor: [7,7]
+        })
+      }).addTo(map).bindPopup(`<small>${display_name}</small>`).openPopup();
+      setTimeout(() => map.removeLayer(pin), 8000);
+    } else {
+      if (input) { input.classList.add('addr-not-found'); setTimeout(() => input.classList.remove('addr-not-found'), 1200); }
+    }
+  } catch(e) {}
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>'; }
 }
 
 // ─────────────────────────────────────────────────────────

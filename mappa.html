@@ -150,6 +150,28 @@
           <button type="button" class="chip"        data-val="In lavorazione" onclick="setFilter('stato','In lavorazione',this)">In lavorazione</button>
         </div>
       </div>
+
+      <!-- Filtri categoria + periodo (sempre visibili) -->
+      <div class="filters filters--extra" id="filtersExtra">
+        <select id="catFilter" class="app-select" onchange="setCatFilter(this.value)">
+          <option value="all">Tutte le categorie</option>
+        </select>
+        <select id="periodoFilter" class="app-select" onchange="setPeriodo(this.value)">
+          <option value="all">Tutti i periodi</option>
+          <option value="7">Ultimi 7 giorni</option>
+          <option value="30">Ultimi 30 giorni</option>
+          <option value="90">Ultimi 90 giorni</option>
+        </select>
+      </div>
+
+      <!-- Ricerca indirizzo -->
+      <div class="addr-search-bar">
+        <input id="addrInput" type="text" placeholder="Cerca indirizzo o via…"
+          onkeydown="if(event.key==='Enter')searchAddress()">
+        <button class="addr-search-btn" onclick="searchAddress()" title="Cerca sulla mappa">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </div>
     </div>
 
     <div class="report-list-header">Segnalazioni Recenti</div>
