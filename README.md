@@ -1,3 +1,18 @@
+
+
+[![GitHub stars](https://img.shields.io/github/stars/gbvitrano/Segnalazioni?style=flat&logo=github&label=stars)](https://github.com/gbvitrano/Segnalazioni/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/gbvitrano/Segnalazioni?style=flat&logo=github&label=forks)](https://github.com/gbvitrano/Segnalazioni/forks)
+[![GitHub last commit](https://img.shields.io/github/last-commit/gbvitrano/Segnalazioni?style=flat&label=ultimo%20aggiornamento)](https://github.com/gbvitrano/Segnalazioni/commits/master)
+[![Sync CSV](https://img.shields.io/github/actions/workflow/status/gbvitrano/Segnalazioni/sync-sheets.yml?style=flat&label=sync%20CSV)](https://github.com/gbvitrano/Segnalazioni/actions/workflows/sync-sheets.yml)
+[![License: CC BY 4.0](https://img.shields.io/badge/license-CC%20BY%204.0-lightgrey?style=flat)](https://creativecommons.org/licenses/by/4.0/deed.it)
+
+[![GitHub Pages](https://img.shields.io/badge/hosted-GitHub%20Pages-blue?style=flat&logo=github)](https://gbvitrano.github.io/Segnalazioni/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6-yellow?style=flat&logo=javascript&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-green?style=flat&logo=leaflet)](https://leafletjs.com/)
+[![Chart.js](https://img.shields.io/badge/Chart.js-4.4-pink?style=flat&logo=chart.js)](https://www.chartjs.org/)
+
+---
+
 # SegnalaOra — Segnalazioni Civiche
 
 Strumento open source per segnalare problemi del territorio al proprio Comune: buche stradali, rifiuti abbandonati, illuminazione pubblica guasta, verde incurato e molto altro.
