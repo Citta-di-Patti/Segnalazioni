@@ -3,9 +3,9 @@
    Legge dal localStorage e incrocia con i CSV pubblici
    ═══════════════════════════════════════════════════════ */
 
-const SHEETS_CSV_APERTE  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzGnyHVzcSbnLKsp1gkFi5a8xJeeFTK8YhmA67XJUEGaJIQ5sMNwqG4Jdhxg9DqaAWU2bdWGHGfnpR/pub?gid=144049557&single=true&output=csv';
-const SHEETS_CSV_RISOLTE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzGnyHVzcSbnLKsp1gkFi5a8xJeeFTK8YhmA67XJUEGaJIQ5sMNwqG4Jdhxg9DqaAWU2bdWGHGfnpR/pub?gid=707341479&single=true&output=csv';
-const APPS_SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbwve06JZu-6pGn0KQXMlZR6OCelS_3SWlxjAtK9CTM1De-26D-YXFUVAdQfR8w8OUts/exec';
+const SHEETS_CSV_APERTE  = APP_CONFIG.sheetsCsvAperte;
+const SHEETS_CSV_RISOLTE = APP_CONFIG.sheetsCsvRisolte;
+const APPS_SCRIPT_URL    = APP_CONFIG.appsScriptUrl;
 const LS_KEY       = 'segnalaora_profilo';
 const LS_EMAIL_KEY = 'segnalaora_email';
 
@@ -61,9 +61,10 @@ function saveLocal(reports) {
 // ─────────────────────────────────────────────
 async function refreshStatuses(reports) {
   try {
+    const bust = (u) => u + (u.includes('?') ? '&' : '?') + 't=' + Date.now();
     const [t1, t2] = await Promise.all([
-      fetch(SHEETS_CSV_APERTE  + '&t=' + Date.now()).then(r => r.text()).catch(() => ''),
-      fetch(SHEETS_CSV_RISOLTE + '&t=' + Date.now()).then(r => r.text()).catch(() => ''),
+      fetch(bust(SHEETS_CSV_APERTE)).then(r => r.text()).catch(() => ''),
+      fetch(bust(SHEETS_CSV_RISOLTE)).then(r => r.text()).catch(() => ''),
     ]);
     const rows  = [...parseCSV(t1), ...parseCSV(t2)];
     const byId  = {};
@@ -124,9 +125,10 @@ async function syncFromEmail(email, showFeedback) {
   }
 
   try {
+    const bust = (u) => u + (u.includes('?') ? '&' : '?') + 't=' + Date.now();
     const [t1, t2] = await Promise.all([
-      fetch(SHEETS_CSV_APERTE  + '&t=' + Date.now()).then(r => r.text()).catch(() => ''),
-      fetch(SHEETS_CSV_RISOLTE + '&t=' + Date.now()).then(r => r.text()).catch(() => ''),
+      fetch(bust(SHEETS_CSV_APERTE)).then(r => r.text()).catch(() => ''),
+      fetch(bust(SHEETS_CSV_RISOLTE)).then(r => r.text()).catch(() => ''),
     ]);
     const allRows = [...parseCSV(t1), ...parseCSV(t2)];
     const rows = allRows.filter(r => (r.Email_Segnalante || '').trim().toLowerCase() === email.toLowerCase());
