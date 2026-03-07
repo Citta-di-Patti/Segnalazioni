@@ -52,9 +52,39 @@ function ensureHeaders(sheet) {
   newRange.setFontColor('#f5f0e8');
 }
 
+// ─── Anti-spam: verifica MX record del dominio email ─────────────
+function hasMXRecord(email) {
+  try {
+    const domain = email.split('@')[1];
+    if (!domain) return false;
+    const resp = UrlFetchApp.fetch(
+      'https://dns.google/resolve?name=' + encodeURIComponent(domain) + '&type=MX',
+      { muteHttpExceptions: true }
+    );
+    const result = JSON.parse(resp.getContentText());
+    return !!(result.Answer && result.Answer.length > 0);
+  } catch (e) {
+    return true; // in caso di errore DNS non bloccare
+  }
+}
+
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+
+    // ─── Anti-spam: honeypot ──────────────────────────────────────
+    if (data._hp) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, id: 'ok' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ─── Anti-spam: verifica MX email segnalante ──────────────────
+    if (data.Email_Segnalante && !hasMXRecord(data.Email_Segnalante)) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, error: 'Dominio email non valido' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
 
     const sheet = SpreadsheetApp
       .openById(SHEET_ID)

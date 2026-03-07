@@ -616,6 +616,7 @@ async function sendReport() {
       Email_Destinatario: toEmails[0] || '',
       Stato:              'Nuova',
       Token_Risoluzione:  token,
+      _hp:                document.getElementById('hp_website')?.value || '',
       ...Object.fromEntries(reportData.photos.map((p, i) => [`imageBase64_${i + 1}`, p.base64])),
     };
     try {

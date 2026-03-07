@@ -189,6 +189,12 @@
     <p class="field-hint" id="socialHint" style="display:none"><i class="fa-solid fa-circle-info"></i> Il post viene generato automaticamente. Una volta aperta l'app, puoi allegare manualmente la foto prima di inviare.</p>
   </section>
 
+  <!-- HONEYPOT anti-spam — non toccare, deve restare vuoto -->
+  <div style="position:absolute;left:-9999px;top:-9999px;width:0;height:0;overflow:hidden;" aria-hidden="true">
+    <label for="hp_website">Website</label>
+    <input type="text" id="hp_website" name="website" tabindex="-1" autocomplete="off">
+  </div>
+
   <!-- ⑦ INVIA -->
   <section class="form-section form-section--send">
     <label class="consent-row">
