@@ -10,10 +10,10 @@ const APP_CONFIG = {
   // 1. GOOGLE SERVICES
   //    Ottieni questi valori dal tuo Google Workspace.
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  appsScriptUrl:    'https://script.google.com/macros/s/AKfycbwve06JZu-6pGn0KQXMlZR6OCelS_3SWlxjAtK9CTM1De-26D-YXFUVAdQfR8w8OUts/exec',
+  appsScriptUrl:    'https://script.google.com/macros/s/AKfycbw5jxYNx22rStYkic_VfScp8BWDkDCDBCZ4HXxZWENKlRxTkeRzNxPHtWjIOrl8-x2Yfg/exec',
                     // Usato da: segnalazione-civica.js (POST nuova seg.) + map.js (risolvi)
-  sheetsCsvAperte:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzGnyHVzcSbnLKsp1gkFi5a8xJeeFTK8YhmA67XJUEGaJIQ5sMNwqG4Jdhxg9DqaAWU2bdWGHGfnpR/pub?gid=144049557&single=true&output=csv',
-  sheetsCsvRisolte: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzGnyHVzcSbnLKsp1gkFi5a8xJeeFTK8YhmA67XJUEGaJIQ5sMNwqG4Jdhxg9DqaAWU2bdWGHGfnpR/pub?gid=707341479&single=true&output=csv',
+  sheetsCsvAperte:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgoBvOwsaEEuh5odDgDpCXr3kNwcp8LUSWpK-liD2BFPqx8Lzc8t7Khm21aGpfvEJMVz4ppAzwyyNN/pub?gid=1499347265&single=true&output=csv',
+  sheetsCsvRisolte: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgoBvOwsaEEuh5odDgDpCXr3kNwcp8LUSWpK-liD2BFPqx8Lzc8t7Khm21aGpfvEJMVz4ppAzwyyNN/pub?gid=1700126523&single=true&output=csv',
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 2. IDENTITA' APP
@@ -22,9 +22,9 @@ const APP_CONFIG = {
     nome:          'SegnalaOra',
     sottotitolo:   'Invia una nuova segnalazione',
     descrizione:   'Segnala in modo semplice e georeferenziato i problemi del tuo territorio.',
-    siteUrl:       '',         // URL del sito (es: https://segnalaora.comune.it) — lascia vuoto per auto-rilevamento
+    siteUrl:       'https://comune-patti.github.io/Segnalazioni/',         // URL del sito (es: https://segnalaora.comune.it) — lascia vuoto per auto-rilevamento
     ogImage:       '',         // URL immagine Open Graph (1200x630 px)
-    hashtag:       '#SegnalaOra',
+    hashtag:       '#SegnalaOra #Patti',
     bannerCrediti: 'Web app civica<br/>by <a href="https://opendatasicilia.it" target="_blank" rel="noopener">@opendatasicilia</a>',
     // Nota: bannerCrediti viene passato come `expandcontent` a L.controlCredits() in map.js
   },
@@ -33,10 +33,10 @@ const APP_CONFIG = {
   // 3. PUBBLICA AMMINISTRAZIONE
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   pa: {
-    nome:          'Comune di [Nome Comune]',
-    sito:          'https://www.comune.[nome].it',
-    emailDefault:  'protocollo@comune.[nome].it',
-    twitterHandle: '@comune[nome]',
+    nome:          'Città di Patti',
+    sito:          'https://www.comune.patti.me.it',
+    emailDefault:  'ced@comune.patti.me.it',
+    twitterHandle: '@ComunediPatti',
   },
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -45,8 +45,8 @@ const APP_CONFIG = {
   //    Usa Google Maps o OpenStreetMap per trovare le coordinate.
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   mappa: {
-    lat:          38.1157,  // latitudine centro comune
-    lng:          13.3615,  // longitudine centro comune
+    lat:          38.1397,  // latitudine centro comune
+    lng:          14.9692,  // longitudine centro comune
     zoomForm:     14,       // zoom nel form segnalazione (segnalazione-civica.js)
     zoomPubblica: 13,       // zoom mappa pubblica (mappa.html)
     maxZoomForm:  20,       // zoom massimo nel form segnalazione
@@ -78,7 +78,7 @@ const APP_CONFIG = {
       nome:        'Buche stradali',
       descrizione: 'Buche, asfalto, marciapiedi',
       categoria:   'Buche e dissesti stradali',
-      email:       'lavori.pubblici@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-road-circle-exclamation',
       custom:      false,
     },
@@ -87,7 +87,7 @@ const APP_CONFIG = {
       nome:        'Illuminazione',
       descrizione: 'Lampioni guasti, semafori',
       categoria:   'Illuminazione pubblica guasta',
-      email:       'illuminazione@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-lightbulb',
       custom:      false,
     },
@@ -96,7 +96,7 @@ const APP_CONFIG = {
       nome:        'Rifiuti',
       descrizione: 'Rifiuti abbandonati, degrado',
       categoria:   'Rifiuti abbandonati',
-      email:       'ambiente@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-trash-can',
       custom:      false,
     },
@@ -105,7 +105,7 @@ const APP_CONFIG = {
       nome:        'Verde Pubblico',
       descrizione: 'Alberi, parchi, aree verdi',
       categoria:   'Alberi e verde pubblico',
-      email:       'verde@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-tree',
       custom:      false,
     },
@@ -114,7 +114,7 @@ const APP_CONFIG = {
       nome:        'Perdite idriche',
       descrizione: 'Perdite, allagamenti, fognature',
       categoria:   'Perdite idriche',
-      email:       'acqua@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-faucet-drip',
       custom:      false,
     },
@@ -123,7 +123,7 @@ const APP_CONFIG = {
       nome:        'Deiezioni',
       descrizione: 'Deiezioni animali non raccolte',
       categoria:   'Deiezioni non raccolte',
-      email:       'ambiente@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-paw',
       custom:      false,
     },
@@ -132,7 +132,7 @@ const APP_CONFIG = {
       nome:        'Segnaletica',
       descrizione: 'Cartelli danneggiati, strisce',
       categoria:   'Segnaletica danneggiata',
-      email:       'lavori.pubblici@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-signs-post',
       custom:      false,
     },
@@ -141,7 +141,7 @@ const APP_CONFIG = {
       nome:        'Veicoli abbandonati',
       descrizione: 'Auto, moto abbandonate',
       categoria:   'Veicoli abbandonati',
-      email:       'polizialocale@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-car-side',
       custom:      false,
     },
@@ -150,7 +150,7 @@ const APP_CONFIG = {
       nome:        'Sicurezza',
       descrizione: 'Degrado, ordine pubblico',
       categoria:   'Degrado e sicurezza',
-      email:       'polizialocale@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-shield-halved',
       custom:      false,
     },
@@ -159,7 +159,7 @@ const APP_CONFIG = {
       nome:        'Barriere arch.',
       descrizione: 'Accessibilita disabili',
       categoria:   'Barriere architettoniche',
-      email:       'lavori.pubblici@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-wheelchair',
       custom:      false,
     },
@@ -168,7 +168,7 @@ const APP_CONFIG = {
       nome:        'Immobile',
       descrizione: 'Edifici pericolanti, crolli',
       categoria:   'Immobile pericolante',
-      email:       'lavori.pubblici@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-house-crack',
       custom:      false,
     },
@@ -177,7 +177,7 @@ const APP_CONFIG = {
       nome:        'Rumore',
       descrizione: 'Inquinamento acustico',
       categoria:   'Inquinamento acustico',
-      email:       'polizialocale@comune.[nome].it',
+      email:       'ced@comune.patti.me.it',
       icon:        'fa-solid fa-volume-high',
       custom:      false,
     },
