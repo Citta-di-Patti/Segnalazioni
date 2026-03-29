@@ -22,7 +22,7 @@ const APP_CONFIG = {
     nome:          'SegnalaOra',
     sottotitolo:   'Invia una nuova segnalazione',
     descrizione:   'Segnala in modo semplice e georeferenziato i problemi del tuo territorio.',
-    siteUrl:       'https://comune-patti.github.io/Segnalazioni/',         // URL del sito (es: https://segnalaora.comune.it) — lascia vuoto per auto-rilevamento
+    siteUrl:       'https://citta-di-patti.github.io/Segnalazioni/',         // URL del sito (es: https://segnalaora.comune.it) — lascia vuoto per auto-rilevamento
     ogImage:       '',         // URL immagine Open Graph (1200x630 px)
     hashtag:       '#SegnalaOra #Patti',
     bannerCrediti: 'Web app civica<br/>by <a href="https://opendatasicilia.it" target="_blank" rel="noopener">@opendatasicilia</a>',
@@ -36,7 +36,7 @@ const APP_CONFIG = {
     nome:          'Città di Patti',
     sito:          'https://www.comune.patti.me.it',
     emailDefault:  'ced@comune.patti.me.it',
-    twitterHandle: '@ComunediPatti',
+    twitterHandle: '',
   },
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
